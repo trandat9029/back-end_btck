@@ -5,9 +5,12 @@
 package com.luvina.la.repository;
 
 import com.luvina.la.entity.Certification;
+import com.luvina.la.entity.Department;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -16,21 +19,11 @@ import java.util.Optional;
  * @author tranledat
  */
 @Repository
-public interface CertificationRepository extends CrudRepository<Certification, Long> {
-
+public interface CertificationRepository extends JpaRepository<Certification, Long> {
     /**
-     * Tim chung chi theo certification id.
+     * Lấy danh sách tất cả chung chi, sắp xếp theo ID giam dan.
      *
-     * @param certificationId Ma chung chi.
-     * @return Optional chua thong tin chung chi.
+     * @return Danh sách các chung chi
      */
-    Optional<Certification> findByCertificationId(Long certificationId);
-
-    /**
-     * Tim chung chi theo ten chung chi.
-     *
-     * @param certificationName Ten chung chi.
-     * @return Optional chua thong tin chung chi.
-     */
-    Optional<Certification> findByCertificationName(String certificationName);
+    List<Certification> findAllByOrderByCertificationIdDesc();
 }
