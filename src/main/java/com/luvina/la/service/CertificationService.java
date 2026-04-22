@@ -17,10 +17,13 @@ import java.util.List;
  */
 public interface CertificationService {
 
-    /**
-     * Lay danh sach tat ca chung chi.
-     *
-     * @return Danh sach chung chi.
-     */
     List<CertificationDTO> getCertifications();
+
+    /**
+     * Kiểm tra xem chứng chỉ có tồn tại trong hệ thống không.
+     *
+     * @param certificationId ID chứng chỉ cần kiểm tra.
+     * @return true nếu tồn tại, false nếu không.
+     */
+    boolean checkExistsCertificationById(Long certificationId);
 }

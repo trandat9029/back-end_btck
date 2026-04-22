@@ -45,4 +45,14 @@ public interface EmployeeService {
      * @return Tong so nhan vien thoa dieu kien.
      */
     Long countEmployeesWithFilter(String employeeName, Long departmentId);
+
+    /**
+     * Kiểm tra xem tài khoản (loginId) đã tồn tại trong hệ thống chưa.
+     * Dùng để validate ER003.
+     *
+     * @param loginId Tên tài khoản cần kiểm tra.
+     * @param employeeId ID của nhân viên hiện tại (nếu là update) để loại trừ.
+     * @return true nếu đã tồn tại, false nếu chưa.
+     */
+    boolean checkExistsEmployeeByLoginId(String loginId, Long employeeId);
 }

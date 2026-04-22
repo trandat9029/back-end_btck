@@ -41,4 +41,16 @@ public class CertificationServiceImpl implements CertificationService {
             return dto;
         }).collect(Collectors.toList());
     }
+
+    /**
+     * Kiểm tra xem chứng chỉ có tồn tại trong hệ thống không.
+     *
+     * @param certificationId ID chứng chỉ cần kiểm tra.
+     * @return true nếu tồn tại, false nếu không.
+     */
+    @Override
+    public boolean checkExistsCertificationById(Long certificationId) {
+        if (certificationId == null) return false;
+        return certificationRepository.findById(certificationId).isPresent();
+    }
 }
