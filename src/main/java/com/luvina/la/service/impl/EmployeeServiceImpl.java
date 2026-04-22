@@ -94,6 +94,21 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     /**
+     * Kiểm tra xem tài khoản (loginId) đã tồn tại trong hệ thống chưa.
+     * Logic: Tìm nhân viên theo loginId, nếu thấy và ID khác với ID hiện tại thì coi là trùng.
+     *
+     * @param loginId Tên tài khoản cần kiểm tra.
+     * @param employeeId ID của nhân viên hiện tại để loại trừ (khi update).
+     * @return true nếu đã tồn tại, false nếu chưa.
+     */
+    @Override
+    public boolean checkExistsEmployeeByLoginId(String loginId, Long employeeId) {
+        return employeeRepository.findByEmployeeLoginId(loginId)
+                .map(employee -> !employee.getEmployeeId().equals(employeeId))
+                .orElse(false);
+    }
+
+    /**
      * Escape ky tu dac biet cho menh de LIKE trong SQL.
      * Muc dich:
      * - Neu nguoi dung nhap % hoac _ thi phai tim nhu ky tu thuong, khong phai wildcard.

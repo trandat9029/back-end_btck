@@ -42,4 +42,16 @@ public class DepartmentServiceImpl implements DepartmentService {
             return List.of();
         }
     }
+
+    /**
+     * Kiểm tra xem phòng ban có tồn tại trong hệ thống không.
+     *
+     * @param departmentId ID phòng ban cần kiểm tra.
+     * @return true nếu tồn tại, false nếu không.
+     */
+    @Override
+    public boolean checkExistsDepartmentById(Long departmentId) {
+        if (departmentId == null) return false;
+        return departmentRepository.findByDepartmentId(departmentId).isPresent();
+    }
 }
