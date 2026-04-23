@@ -1,6 +1,6 @@
 /**
  * Copyright(C) 2026 Luvina
- * [DepartmentService.java], 13/04/2026 tranledat
+ * [DepartmentService.java], 23/04/2026 tranledat
  */
 package com.luvina.la.service;
 
@@ -9,7 +9,7 @@ import com.luvina.la.dto.DepartmentDTO;
 import java.util.List;
 
 /**
- * Service xu ly nghiep vu lien quan den phong ban.
+ * Interface cung cấp các phương thức xử lý nghiệp vụ liên quan đến phòng ban.
  *
  * @author tranledat
  */

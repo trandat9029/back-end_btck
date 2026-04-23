@@ -1,15 +1,17 @@
 /**
  * Copyright(C) 2026 Luvina
- * [EmployeeService.java], 13/04/2026 tranledat
+ * [EmployeeService.java], 23/04/2026 tranledat
  */
 package com.luvina.la.service;
 
 import com.luvina.la.dto.EmployeeDTO;
+import com.luvina.la.payload.request.EmployeeRequest;
 
 import java.util.List;
 
 /**
- * Service xu ly nghiep vu lien quan den nhan vien.
+ * Interface cung cấp các phương thức xử lý nghiệp vụ liên quan đến nhân viên.
+ * Bao gồm tìm kiếm, đếm số lượng, kiểm tra tồn tại và thêm mới nhân viên.
  *
  * @author tranledat
  */
@@ -55,4 +57,13 @@ public interface EmployeeService {
      * @return true nếu đã tồn tại, false nếu chưa.
      */
     boolean checkExistsEmployeeByLoginId(String loginId, Long employeeId);
+
+    /**
+     * Thêm mới nhân viên.
+     * Bao gồm cả việc lưu thông tin chứng chỉ vào bảng employees_certifications.
+     *
+     * @param employeeRequestDTO Dữ liệu nhân viên từ request.
+     */
+    void addEmployee(EmployeeRequest employeeRequest);
+
 }

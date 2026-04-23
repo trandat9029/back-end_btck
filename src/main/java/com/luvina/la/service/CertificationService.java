@@ -1,17 +1,15 @@
 /**
- * Copyright(C) 2026 Luvina Software
- * app.java 00/00/2026 tranledat
+ * Copyright(C) 2026 Luvina
+ * [CertificationService.java], 23/04/2026 tranledat
  */
-
 package com.luvina.la.service;
-
 
 import com.luvina.la.dto.CertificationDTO;
 
 import java.util.List;
 
 /**
- * Service xu ly nghiep vu lien quan den chung chi.
+ * Interface cung cấp các phương thức xử lý nghiệp vụ liên quan đến chứng chỉ.
  *
  * @author tranledat
  */

@@ -5,17 +5,19 @@
 package com.luvina.la.controller;
 
 import com.luvina.la.dto.EmployeeDTO;
-import com.luvina.la.payload.EmployeeListResponse;
+import com.luvina.la.payload.response.EmployeeListResponse;
 import com.luvina.la.service.EmployeeService;
 import com.luvina.la.validation.ValidateParamADM002;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import com.luvina.la.payload.request.EmployeeRequest;
+import com.luvina.la.validation.EmployeeValidate;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import com.luvina.la.dto.EmployeeRequestDTO;
-import com.luvina.la.validation.ValidateADM004;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -37,6 +39,8 @@ public class EmployeeController {
     private static final String ERROR_PAGE_NOT_FOUND = "ER022";
     private static final String ERROR_SYSTEM = "ER023";
     private static final String ERROR_NUMERIC = "ER018";
+    private static final String MSG_ADD_SUCCESS = "MSG001";
+    private static final String MSG_EDIT_SUCCESS = "MSG002";
     private static final String OFFSET_PARAM_KEY = "employee.validation.offset.param";
     private static final String LIMIT_PARAM_KEY = "employee.validation.limit.param";
     private static final String DEPARTMENT_ID_PARAM_KEY = "employee.validation.department-id.param";
@@ -50,7 +54,7 @@ public class EmployeeController {
     private final MessageSource messageSource;
     private final java.util.Locale defaultLocale = Locale.JAPANESE; // Sử dụng Locale Nhật Bản theo yêu cầu project
     private final ValidateParamADM002 validateParamADM002;
-    private final ValidateADM004 validateADM004;
+    private final EmployeeValidate employeeValidate;
 
     /**
      * API validate dữ liệu cho màn hình ADM004 (Thêm mới/Chỉnh sửa nhân viên).
@@ -59,17 +63,21 @@ public class EmployeeController {
      * @return Kết quả validate (Thành công hoặc Lỗi đầu tiên phát hiện được).
      */
     @PostMapping("/employees/validate")
-    public ResponseEntity<EmployeeListResponse> validateEmployee(@RequestBody EmployeeRequestDTO request) {
+    public ResponseEntity<EmployeeListResponse> validateEmployee(@RequestBody EmployeeRequest request) {
         EmployeeListResponse response = new EmployeeListResponse();
         try {
             // Thực hiện validate logic nghiệp vụ và định dạng
-            List<ValidateADM004.ErrorItem> errors = validateADM004.validate(request);
+            List<EmployeeValidate.ErrorItem> errors = employeeValidate.validate(request);
 
-            // Nếu có lỗi, lấy lỗi đầu tiên để trả về cho Frontend hiển thị
             if (!errors.isEmpty()) {
-                ValidateADM004.ErrorItem firstError = errors.get(0);
-                response.setCode(firstError.code);
-                response.setMessage(messageSource.getMessage(firstError.code, null, firstError.code, defaultLocale));
+                List<EmployeeListResponse.FieldError> fieldErrors = new ArrayList<>();
+                for (EmployeeValidate.ErrorItem error : errors) {
+                    Object[] args = error.params != null ? error.params.toArray() : null;
+                    String message = messageSource.getMessage(error.code, args, error.code, defaultLocale);
+                    fieldErrors.add(new EmployeeListResponse.FieldError(error.field, message));
+                }
+                response.setFieldErrors(fieldErrors);
+                response.setCode(errors.get(0).code);
                 return ResponseEntity.ok(response);
             }
 
@@ -85,6 +93,48 @@ public class EmployeeController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    /**
+     * API thực hiện lưu (Thêm mới hoặc Cập nhật) nhân viên.
+     * Được gọi từ màn hình ADM005 sau khi người dùng nhấn OK.
+     *
+     * @param request Dữ liệu nhân viên đã được xác nhận.
+     * @return Kết quả lưu (Thành công hoặc Lỗi hệ thống).
+     */
+    @PostMapping("/employees")
+    public ResponseEntity<EmployeeListResponse> addEmployee(@RequestBody EmployeeRequest request) {
+        EmployeeListResponse response = new EmployeeListResponse();
+        try {
+            // 1. Thực hiện validate lại lần cuối để đảm bảo an toàn
+            List<EmployeeValidate.ErrorItem> errors = employeeValidate.validate(request);
+            if (!errors.isEmpty()) {
+                List<EmployeeListResponse.FieldError> fieldErrors = new ArrayList<>();
+                for (EmployeeValidate.ErrorItem error : errors) {
+                    Object[] args = error.params != null ? error.params.toArray() : null;
+                    String message = messageSource.getMessage(error.code, args, error.code, defaultLocale);
+                    fieldErrors.add(new EmployeeListResponse.FieldError(error.field, message));
+                }
+                response.setFieldErrors(fieldErrors);
+                response.setCode(errors.get(0).code);
+                return ResponseEntity.ok(response);
+            }
+
+            // 2. Gọi service Thêm mới
+            employeeService.addEmployee(request);
+            response.setCode(CODE_SUCCESS);
+            response.setMessage(messageSource.getMessage(MSG_ADD_SUCCESS, null, MSG_ADD_SUCCESS, defaultLocale));
+            
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            // Xử lý lỗi hệ thống
+            String message = messageSource.getMessage(ERROR_SYSTEM, null, ERROR_SYSTEM, defaultLocale);
+            response.setCode(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()));
+            response.setMessage(message);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 
     /**
      * API lấy danh sách nhân viên (ADM002).

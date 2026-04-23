@@ -1,22 +1,35 @@
 /**
  * Copyright(C) 2026 Luvina
- * [EmployeeService.java], 13/04/2026 tranledat
+ * [EmployeeServiceImpl.java], 23/04/2026 tranledat
  */
 package com.luvina.la.service.impl;
 
 import com.luvina.la.dto.EmployeeDTO;
+import com.luvina.la.payload.request.EmployeeRequest;
+import com.luvina.la.entity.Certification;
+import com.luvina.la.entity.Department;
+import com.luvina.la.entity.Employee;
+import com.luvina.la.entity.EmployeeCertification;
+import com.luvina.la.repository.CertificationRepository;
+import com.luvina.la.repository.DepartmentRepository;
+import com.luvina.la.repository.EmployeeCertificationRepository;
 import com.luvina.la.repository.EmployeeRepository;
 import com.luvina.la.service.EmployeeService;
+import com.luvina.la.validation.EmployeeValidate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Service implementation xu ly danh sach nhan vien.
+ * Lớp triển khai các phương thức xử lý nghiệp vụ liên quan đến nhân viên.
+ * Thực hiện các thao tác với Database thông qua các Repository.
  *
  * @author tranledat
  */
@@ -25,6 +38,10 @@ import java.util.stream.Collectors;
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+    private final DepartmentRepository departmentRepository;
+    private final CertificationRepository certificationRepository;
+    private final EmployeeCertificationRepository employeeCertificationRepository;
+    private final EmployeeValidate employeeValidate;
 
     /**
      * Lay danh sach nhan vien cho ADM002 theo dieu kien tim kiem, sap xep va phan trang.
@@ -147,5 +164,58 @@ public class EmployeeServiceImpl implements EmployeeService {
             return (LocalDate) obj;
         }
         return null;
+    }
+
+    /**
+     * Thực hiện thêm mới nhân viên.
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addEmployee(EmployeeRequest request) {
+        // 1. Re-validate dữ liệu (Double check)
+        List<EmployeeValidate.ErrorItem> errors = employeeValidate.validate(request);
+        if (!errors.isEmpty()) {
+            throw new RuntimeException("Validation failed: " + errors.get(0).code);
+        }
+
+        // 2. Chuyển đổi DTO sang Entity Employee (Tạo mới)
+        Employee employee = new Employee();
+        employee.setEmployeeLoginId(request.getEmployeeLoginId());
+        employee.setEmployeeName(request.getEmployeeName());
+        employee.setEmployeeNameKana(request.getEmployeeNameKana());
+        employee.setEmployeeBirthDate(LocalDate.parse(request.getEmployeeBirthDate()));
+        employee.setEmployeeEmail(request.getEmployeeEmail());
+        employee.setEmployeeTelephone(request.getEmployeeTelephone());
+        employee.setEmployeeLoginPassword(request.getEmployeeLoginPassword());
+
+        // Set Department
+        Department department = departmentRepository.findById(request.getDepartmentId())
+                .orElseThrow(() -> new RuntimeException("Department not found"));
+        employee.setDepartment(department);
+
+        // 3. Lưu thông tin Employee
+        Employee savedEmployee = employeeRepository.save(employee);
+
+        // 4. Lưu thông tin Chứng chỉ (nếu có chọn)
+        saveCertification(savedEmployee, request);
+    }
+
+    /**
+     * Hàm dùng chung để lưu thông tin chứng chỉ của nhân viên.
+     */
+    private void saveCertification(Employee savedEmployee, EmployeeRequest request) {
+        if (request.getCertificationId() != null && !request.getCertificationId().toString().isEmpty()) {
+            Certification certification = certificationRepository.findById(request.getCertificationId())
+                    .orElseThrow(() -> new RuntimeException("Certification not found"));
+
+            EmployeeCertification empCert = new EmployeeCertification();
+            empCert.setEmployee(savedEmployee);
+            empCert.setCertification(certification);
+            empCert.setStartDate(LocalDate.parse(request.getCertificationStartDate()));
+            empCert.setEndDate(LocalDate.parse(request.getCertificationEndDate()));
+            empCert.setScore(new BigDecimal(request.getEmployeeCertificationScore()));
+
+            employeeCertificationRepository.save(empCert);
+        }
     }
 }

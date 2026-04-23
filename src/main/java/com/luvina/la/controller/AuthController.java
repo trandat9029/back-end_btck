@@ -1,11 +1,15 @@
+/**
+ * Copyright(C) 2026 Luvina
+ * [AuthController.java], 23/04/2026 tranledat
+ */
 package com.luvina.la.controller;
 
 
 import com.luvina.la.config.jwt.AuthUserDetails;
 import com.luvina.la.config.jwt.JwtTokenProvider;
 import com.luvina.la.config.jwt.UserDetailsServiceImpl;
-import com.luvina.la.payload.LoginRequest;
-import com.luvina.la.payload.LoginResponse;
+import com.luvina.la.payload.request.LoginRequest;
+import com.luvina.la.payload.response.LoginResponse;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
