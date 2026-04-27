@@ -1,6 +1,6 @@
 /**
  * Copyright(C) 2026 - Luvina
- * [EmployeeServiceImpl.java], 24/04/2026 [tranledat]
+ * [EmployeeServiceImpl.java], 24/04/2026 tranledat
  */
 package com.luvina.la.service.impl;
 
@@ -82,12 +82,15 @@ public class EmployeeServiceImpl implements EmployeeService {
                         ((Number) row[0]).longValue(),
                         (String) row[1],
                         convertSqlDateToLocalDate(row[2]),
-                        (String) row[3],
+                        row[3] != null ? ((Number) row[3]).longValue() : null,
                         (String) row[4],
                         (String) row[5],
                         (String) row[6],
-                        convertSqlDateToLocalDate(row[7]),
-                        row[8] != null ? ((Number) row[8]).doubleValue() : null
+                        (String) row[7],
+                        (String) row[8],
+                        (String) row[9],
+                        convertSqlDateToLocalDate(row[10]),
+                        row[11] != null ? ((Number) row[11]).doubleValue() : null
                 ))
                 .collect(Collectors.toList());
     }
@@ -156,20 +159,25 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
     /**
-     * Thực hiện thêm mới nhân viên.
-     * @param request Dữ liệu nhân viên từ form.
+     * Thực hiện thêm mới hoặc cập nhật thông tin nhân viên vào cơ sở dữ liệu.
+     * @param request Đối tượng EmployeeRequest chứa thông tin nhân viên từ form nhập liệu.
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addEmployee(EmployeeRequest request) {
-        // 1. Thực hiện validate dữ liệu lại một lần nữa để đảm bảo tính toàn vẹn
+        // 1. Thực hiện validate dữ liệu
         List<MessageResponse> errors = employeeValidate.validate(request);
         if (!errors.isEmpty()) {
             throw new CustomException(errors.get(0).getCode());
         }
 
-        // 2. Khởi tạo đối tượng nhân viên mới
-        Employee employee = new Employee();
+        Employee employee;
+        // 2. Kiểm tra Thêm mới hay Cập nhật
+        if (request.getEmployeeId() != null) {
+            employee = employeeRepository.findById(request.getEmployeeId())
+                    .orElseThrow(() -> new CustomException("ER013", "ID"));
+        } else {
+            employee = new Employee();
             employee.setEmployeeLoginId(request.getEmployeeLoginId());
         }
 
@@ -180,21 +188,37 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setEmployeeEmail(request.getEmployeeEmail());
         employee.setEmployeeTelephone(request.getEmployeeTelephone());
         
-        // Chỉ cập nhật password nếu request có gửi password mới (thường dùng cho add mới)
         if (request.getEmployeeLoginPassword() != null && !request.getEmployeeLoginPassword().isEmpty()) {
             employee.setEmployeeLoginPassword(request.getEmployeeLoginPassword());
         }
 
-        // Set Department
         Department department = departmentRepository.findById(request.getDepartmentId())
                 .orElseThrow(() -> new CustomException("ER004", "departmentId"));
         employee.setDepartment(department);
 
-        // 4. Lưu thông tin Employee (Lưu xong sẽ có ID nếu là thêm mới)
+        // 4. Lưu thông tin Employee
         Employee savedEmployee = employeeRepository.save(employee);
 
         // 5. Lưu thông tin chứng chỉ liên quan
+        if (request.getEmployeeId() != null) {
+            employeeCertificationRepository.deleteByEmployeeEmployeeId(request.getEmployeeId());
+        }
         saveCertification(savedEmployee, request);
+    }
+
+    /**
+     * Thực hiện xóa thông tin nhân viên khỏi cơ sở dữ liệu dựa trên ID.
+     * Trước khi xóa nhân viên, sẽ thực hiện xóa các bản ghi liên quan trong bảng chứng chỉ.
+     * @param employeeId Mã ID của nhân viên cần thực hiện xóa.
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteEmployee(Long employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new CustomException("ER013", "ID"));
+
+        employeeCertificationRepository.deleteByEmployeeEmployeeId(employeeId);
+        employeeRepository.delete(employee);
     }
 
     /**
@@ -219,9 +243,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     /**
-     * Lấy thông tin chi tiết nhân viên theo ID.
-     * @param employeeId ID của nhân viên.
-     * @return Đối tượng chứa thông tin chi tiết nhân viên.
+     * Lấy thông tin chi tiết của một nhân viên dựa trên mã ID nhân viên.
+     * @param employeeId Mã ID của nhân viên cần lấy thông tin chi tiết.
+     * @return EmployeeDetailResponse Đối tượng chứa toàn bộ thông tin chi tiết và danh sách chứng chỉ của nhân viên.
      */
     @Override
     public EmployeeDetailResponse getEmployeeById(Long employeeId) {

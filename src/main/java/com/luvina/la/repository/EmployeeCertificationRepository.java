@@ -58,5 +58,6 @@ public interface EmployeeCertificationRepository extends CrudRepository<Employee
      * Xóa toàn bộ chứng chỉ của một nhân viên.
      * @param employeeId Ma nhan vien.
      */
+    @org.springframework.data.jpa.repository.Modifying
     void deleteByEmployeeEmployeeId(Long employeeId);
 }

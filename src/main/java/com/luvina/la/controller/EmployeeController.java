@@ -1,6 +1,6 @@
 /**
  * Copyright(C) 2026 - Luvina
- * [EmployeeController.java], 24/04/2026 [tranledat]
+ * [EmployeeController.java], 24/04/2026 tranledat
  */
 package com.luvina.la.controller;
 
@@ -52,9 +52,9 @@ public class EmployeeController {
     }
 
     /**
-     * API thực hiện lưu (Thêm mới hoặc Cập nhật) nhân viên.
-     * @param request Dữ liệu nhân viên đã được xác nhận.
-     * @return Kết quả lưu thành công.
+     * API thực hiện lưu (Thêm mới hoặc Cập nhật) thông tin nhân viên vào hệ thống.
+     * @param request Đối tượng EmployeeRequest chứa toàn bộ thông tin nhân viên từ Form.
+     * @return ResponseEntity Đối tượng chứa mã trạng thái và thông báo kết quả thực hiện.
      */
     @PostMapping("/employees")
     public ResponseEntity<Object> addEmployee(@RequestBody EmployeeRequest request) {
@@ -126,9 +126,9 @@ public class EmployeeController {
     }
 
     /**
-     * API lấy thông tin chi tiết nhân viên (ADM004 - Edit mode).
-     * @param id ID của nhân viên cần lấy thông tin.
-     * @return ResponseEntity chứa thông tin chi tiết nhân viên.
+     * API thực hiện lấy thông tin chi tiết của một nhân viên phục vụ màn hình xem chi tiết (ADM003) hoặc chỉnh sửa (ADM004).
+     * @param id Mã ID của nhân viên cần thực hiện truy vấn thông tin.
+     * @return ResponseEntity Đối tượng EmployeeDetailResponse chứa toàn bộ thông tin chi tiết của nhân viên.
      */
     @GetMapping("/employees/{id}")
     public ResponseEntity<EmployeeDetailResponse> getEmployee(@PathVariable("id") Long id) {
@@ -142,9 +142,9 @@ public class EmployeeController {
     }
 
     /**
-     * API xóa nhân viên (ADM003).
-     * @param id ID của nhân viên cần xóa.
-     * @return ResponseEntity thông báo thành công.
+     * API thực hiện xóa thông tin một nhân viên khỏi hệ thống dựa trên ID nhân viên.
+     * @param id Mã ID của nhân viên cần thực hiện xóa.
+     * @return ResponseEntity Đối tượng chứa mã trạng thái và thông báo kết quả xóa thành công.
      */
     @DeleteMapping("/employees/{id}")
     public ResponseEntity<Object> deleteEmployee(@PathVariable("id") Long id) {

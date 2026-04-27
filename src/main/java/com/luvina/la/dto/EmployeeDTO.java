@@ -53,18 +53,24 @@ public class EmployeeDTO implements Serializable {
     public EmployeeDTO(Long employeeId,
                        String employeeName,
                        LocalDate employeeBirthDate,
+                       Long departmentId,
                        String departmentName,
                        String employeeEmail,
                        String employeeTelephone,
+                       String employeeNameKana,
+                       String employeeLoginId,
                        String certificationName,
                        LocalDate endDate,
                        Double score) {
         this.employeeId = employeeId;
         this.employeeName = employeeName;
         this.employeeBirthDate = employeeBirthDate;
+        this.departmentId = departmentId;
         this.departmentName = departmentName;
         this.employeeEmail = employeeEmail;
         this.employeeTelephone = employeeTelephone;
+        this.employeeNameKana = employeeNameKana;
+        this.employeeLoginId = employeeLoginId;
         this.certificationName = certificationName;
         this.endDate = endDate;
         this.score = score;

@@ -69,7 +69,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
      */
 
     @Query(value = "SELECT e.employee_id, e.employee_name, e.employee_birth_date, " +
-            "d.department_name, e.employee_email, e.employee_telephone, " +
+            "d.department_id, d.department_name, e.employee_email, e.employee_telephone, " +
+            "e.employee_name_kana, e.employee_login_id, " +
             "rc.certification_name, rc.end_date, rc.score " +
             "FROM employees e " +
             "INNER JOIN departments d ON e.department_id = d.department_id " +
