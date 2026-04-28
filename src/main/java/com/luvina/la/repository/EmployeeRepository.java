@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository truy van du lieu nhan vien.
+ * Repository truy vấn dữ liệu nhân viên.
  *
  * @author tranledat
  */
@@ -22,27 +22,27 @@ import java.util.Optional;
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     /**
-     * Tim nhan vien theo login id.
+     * Tìm nhân viên theo login id.
      *
-     * @param employeeLoginId Login id cua nhan vien.
-     * @return Optional chua thong tin nhan vien.
+     * @param employeeLoginId Login id của nhân viên.
+     * @return Optional chứa thông tin nhân viên.
      */
     Optional<Employee> findByEmployeeLoginId(String employeeLoginId);
 
     /**
-     * Tim nhan vien theo employee id.
+     * Tìm nhân viên theo employee id.
      *
-     * @param employeeId Ma nhan vien.
-     * @return Optional chua thong tin nhan vien.
+     * @param employeeId Mã nhân viên.
+     * @return Optional chứa thông tin nhân viên.
      */
     Optional<Employee> findByEmployeeId(Long employeeId);
 
     /**
-     * Dem tong so nhan vien thoa dieu kien tim kiem.
+     * Đếm tổng số nhân viên thỏa điều kiện tìm kiếm.
      *
-     * @param employeeName Ten nhan vien dung de tim kiem.
-     * @param departmentId Ma phong ban dung de loc.
-     * @return Tong so ban ghi thoa dieu kien.
+     * @param employeeName Tên nhân viên dùng để tìm kiếm.
+     * @param departmentId Mã phòng ban dùng để lọc.
+     * @return Tổng số bản ghi thỏa điều kiện.
      */
     @Query(value = "SELECT COUNT(e.employee_id) FROM employees e " +
             "INNER JOIN departments d ON e.department_id = d.department_id " +
@@ -56,16 +56,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     );
 
     /**
-     * Lay danh sach nhan vien theo dieu kien tim kiem, sap xep va phan trang.
+     * Lấy danh sách nhân viên theo điều kiện tìm kiếm, sắp xếp và phân trang.
      *
-     * @param employeeName Ten nhan vien dung de tim kiem.
-     * @param departmentId Ma phong ban dung de loc.
-     * @param ordEmployeeName Thu tu sap xep theo ten nhan vien.
-     * @param ordCertificationName Thu tu sap xep theo ten chung chi.
-     * @param ordEndDate Thu tu sap xep theo ngay het han.
-     * @param offset Vi tri ban ghi bat dau.
-     * @param limit So luong ban ghi can lay.
-     * @return Danh sach row object theo ket qua query.
+     * @param employeeName Tên nhân viên dùng để tìm kiếm.
+     * @param departmentId Mã phòng ban dùng để lọc.
+     * @param sortEmployeeName Thứ tự sắp xếp theo tên nhân viên.
+     * @param sortCertificationName Thứ tự sắp xếp theo tên chứng chỉ.
+     * @param sortEndDate Thứ tự sắp xếp theo ngày hết hạn.
+     * @param offset Vị trí bản ghi bắt đầu.
+     * @param limit Số lượng bản ghi cần lấy.
+     * @return Danh sách row object theo kết quả query.
      */
 
     @Query(value = "SELECT e.employee_id, e.employee_name, e.employee_birth_date, " +

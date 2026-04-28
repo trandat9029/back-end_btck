@@ -11,6 +11,7 @@ import com.luvina.la.payload.request.EmployeeRequest;
 import com.luvina.la.payload.response.EmployeeDetailResponse;
 import com.luvina.la.payload.response.EmployeeListResponse;
 import com.luvina.la.payload.response.MessageResponse;
+import com.luvina.la.payload.response.UpdateEmployeeResponse;
 import com.luvina.la.service.EmployeeService;
 import com.luvina.la.validation.EmployeeValidate;
 import com.luvina.la.validation.ParamValidate;
@@ -52,23 +53,47 @@ public class EmployeeController {
     }
 
     /**
-     * API thực hiện lưu (Thêm mới hoặc Cập nhật) thông tin nhân viên vào hệ thống.
+     * API thực hiện thêm mới thông tin nhân viên vào hệ thống.
      * @param request Đối tượng EmployeeRequest chứa toàn bộ thông tin nhân viên từ Form.
-     * @return ResponseEntity Đối tượng chứa mã trạng thái và thông báo kết quả thực hiện.
+     * @return ResponseEntity Đối tượng chứa mã trạng thái và thông báo kết quả thực hiện (code 200, employeeId, message object).
      */
     @PostMapping("/employees")
     public ResponseEntity<Object> addEmployee(@RequestBody EmployeeRequest request) {
-        // 1. Thực hiện validate lại lần cuối để đảm bảo an toàn
+        // 1. Thực hiện validate lại lần cuối
         List<MessageResponse> errors = employeeValidate.validate(request);
         if (!errors.isEmpty()) {
             return ResponseEntity.badRequest().body(errors);
         }
 
-        // 2. Gọi service Thêm mới/Cập nhật
-        employeeService.addEmployee(request);
+        // 2. Gọi service Thêm mới
+        Long newId = employeeService.addEmployee(request);
         
-        String successMsg = messageSource.getMessage("MSG001", null, "Add Success", defaultLocale);
-        return ResponseEntity.ok(new MessageResponse(Constants.CODE_SUCCESS, successMsg));
+        // 3. Trả về response theo đúng cấu trúc thiết kế
+        return ResponseEntity.ok(UpdateEmployeeResponse.success(newId, "MSG001"));
+    }
+
+    /**
+     * API thực hiện cập nhật thông tin nhân viên vào hệ thống.
+     * @param id ID của nhân viên cần cập nhật.
+     * @param request Đối tượng EmployeeRequest chứa toàn bộ thông tin nhân viên từ Form.
+     * @return ResponseEntity Đối tượng chứa mã trạng thái và thông báo kết quả thực hiện (code 200, employeeId, message object).
+     */
+    @PutMapping("/employees/{id}")
+    public ResponseEntity<Object> updateEmployee(@PathVariable("id") Long id, @RequestBody EmployeeRequest request) {
+        // 1. Gán ID từ PathVariable vào request để đồng bộ
+        request.setEmployeeId(id);
+
+        // 2. Thực hiện validate dữ liệu
+        List<MessageResponse> errors = employeeValidate.validate(request);
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        // 3. Gọi service Cập nhật
+        Long updatedId = employeeService.updateEmployee(request);
+        
+        // 4. Trả về response theo đúng cấu trúc thiết kế
+        return ResponseEntity.ok(UpdateEmployeeResponse.success(updatedId, "MSG002"));
     }
 
     /**

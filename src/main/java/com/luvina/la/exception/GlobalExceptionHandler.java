@@ -50,12 +50,17 @@ public class GlobalExceptionHandler {
      * Bắt các lỗi không xác định (Internal Server Error).
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<List<MessageResponse>> handleAllExceptions(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex) {
         log.error("Unexpected Error: ", ex);
         
-        String message = messageSource.getMessage("ER999", null, "Internal Server Error", defaultLocale);
-        MessageResponse response = MessageResponse.builder().code("ER999").message(message).build();
+        ErrorResponse response = ErrorResponse.builder()
+                .code("500")
+                .message(ErrorResponse.MessageDetail.builder()
+                        .code("ER999") // Hoặc mã lỗi hệ thống tương ứng
+                        .params(Collections.emptyList())
+                        .build())
+                .build();
         
-        return new ResponseEntity<>(Collections.singletonList(response), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

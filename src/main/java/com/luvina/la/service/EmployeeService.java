@@ -62,9 +62,17 @@ public interface EmployeeService {
      * Thêm mới nhân viên.
      * Bao gồm cả việc lưu thông tin chứng chỉ vào bảng employees_certifications.
      *
-     * @param employeeRequestDTO Dữ liệu nhân viên từ request.
+     * @param request Dữ liệu nhân viên từ request.
+     * @return ID của nhân viên vừa được thêm mới.
      */
-    void addEmployee(EmployeeRequest employeeRequest);
+    Long addEmployee(EmployeeRequest request);
+
+    /**
+     * Cập nhật thông tin nhân viên.
+     * @param request Dữ liệu nhân viên cần cập nhật.
+     * @return ID của nhân viên vừa được cập nhật.
+     */
+    Long updateEmployee(EmployeeRequest request);
 
     /**
      * Lấy thông tin chi tiết nhân viên theo ID.
