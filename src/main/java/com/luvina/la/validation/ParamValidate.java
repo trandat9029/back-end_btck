@@ -34,19 +34,19 @@ public class ParamValidate {
         if (!isValidSortOrder(ordName)
                 || !isValidSortOrder(ordCert)
                 || !isValidSortOrder(ordEnd)) {
-            throw new CustomException(Constants.CODE_ERROR_SORT_ORDER);
+            throw new CustomException(Constants.CODE_ER021);
         }
 
         if (!isValidNonNegativeInteger(offset)) {
-            throw new CustomException(Constants.CODE_ERROR_NUMERIC, "offset");
+            throw new CustomException(Constants.CODE_ER008, "offset");
         }
 
         if (!isValidPositiveInteger(limit)) {
-            throw new CustomException(Constants.CODE_ERROR_NUMERIC, "limit");
+            throw new CustomException(Constants.CODE_ER008, "limit");
         }
 
         if (!isValidPositiveInteger(deptId)) {
-            throw new CustomException(Constants.CODE_ERROR_NUMERIC, "departmentId");
+            throw new CustomException(Constants.CODE_ER008, "departmentId");
         }
     }
 

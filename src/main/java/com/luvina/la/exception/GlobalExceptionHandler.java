@@ -5,6 +5,8 @@
 package com.luvina.la.exception;
 
 import com.luvina.la.payload.response.MessageResponse;
+import com.luvina.la.payload.response.ErrorResponse;
+import com.luvina.la.config.Constants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
@@ -54,11 +56,8 @@ public class GlobalExceptionHandler {
         log.error("Unexpected Error: ", ex);
         
         ErrorResponse response = ErrorResponse.builder()
-                .code("500")
-                .message(ErrorResponse.MessageDetail.builder()
-                        .code("ER999") // Hoặc mã lỗi hệ thống tương ứng
-                        .params(Collections.emptyList())
-                        .build())
+                .code(Constants.CODE_ERROR_SYSTEM)
+                .message("システムエラーが発生しました。") // Thông báo lỗi hệ thống đơn giản
                 .build();
         
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);

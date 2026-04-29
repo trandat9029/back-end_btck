@@ -9,10 +9,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
  * DTO phản hồi lỗi hệ thống (500) theo đúng yêu cầu thiết kế.
+ * Cấu trúc đơn giản: code (500) và thông báo lỗi dạng String.
  * @author tranledat
  */
 @Data
@@ -21,18 +20,7 @@ import java.util.List;
 @Builder
 public class ErrorResponse {
 
-    private String code;
-    private MessageDetail message;
+    private String code; // Mã lỗi (VD: 500)
+    private String message; // Thông báo lỗi đơn giản (VD: "Hệ thống có lỗi.")
 
-    /**
-     * Thông tin chi tiết của lỗi.
-     */
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class MessageDetail {
-        private String code;
-        private List<String> params;
-    }
 }

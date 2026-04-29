@@ -20,6 +20,7 @@ import com.luvina.la.repository.EmployeeCertificationRepository;
 import com.luvina.la.repository.EmployeeRepository;
 import com.luvina.la.service.EmployeeService;
 import com.luvina.la.validation.EmployeeValidate;
+import com.luvina.la.config.Constants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,10 +97,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     /**
-     * Đếm tổng số nhân viên thỏa điều kiện tìm kiếm.
+     * Đếm tổng số lượng nhân viên thỏa mãn điều kiện lọc.
      * @param employeeName Tên nhân viên dùng để tìm kiếm.
      * @param departmentId Mã phòng ban dùng để lọc.
-     * @return Tổng số nhân viên thỏa điều kiện.
+     * @return Tổng số lượng nhân viên.
      */
     @Override
     public Long countEmployeesWithFilter(String employeeName, Long departmentId) {
@@ -110,9 +111,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     /**
-     * Kiểm tra xem tài khoản (loginId) đã tồn tại trong hệ thống chưa.
-     * @param loginId Tên tài khoản cần kiểm tra.
-     * @param employeeId ID của nhân viên hiện tại để loại trừ (khi update).
+     * Kiểm tra xem Login ID đã tồn tại trong hệ thống chưa (trừ nhân viên hiện tại nếu đang update).
+     * @param loginId Tên đăng nhập cần kiểm tra.
+     * @param employeeId ID nhân viên hiện tại (null nếu là thêm mới).
      * @return true nếu đã tồn tại, false nếu chưa.
      */
     @Override
@@ -144,9 +145,7 @@ public class EmployeeServiceImpl implements EmployeeService {
      * @return LocalDate sau khi chuyển đổi.
      */
     private LocalDate convertSqlDateToLocalDate(Object obj) {
-        if (obj == null) {
-            return null;
-        }
+        if (obj == null) return null;
         if (obj instanceof Date) {
             return ((Date) obj).toLocalDate();
         }
@@ -180,7 +179,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         // 4. Lưu chứng chỉ
         if (request.getCertificationId() != null) {
             Certification certification = certificationRepository.findById(request.getCertificationId())
-                    .orElseThrow(() -> new CustomException("ER004", "certificationId"));
+                    .orElseThrow(() -> new CustomException(Constants.CODE_ER004, "certificationId"));
 
             EmployeeCertification employeeCertification = new EmployeeCertification();
             employeeCertification.setEmployee(persistedEmployee);
@@ -208,7 +207,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         // 2. Tìm nhân viên hiện tại
         Employee employee = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(() -> new CustomException("ER013", "ID"));
+                .orElseThrow(() -> new CustomException(Constants.CODE_ER013, "ID"));
 
         // 3. Map dữ liệu từ request sang entity và lưu
         mapRequestToEntity(request, employee);
@@ -218,7 +217,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeCertificationRepository.deleteByEmployeeEmployeeId(request.getEmployeeId());
         if (request.getCertificationId() != null) {
             Certification certification = certificationRepository.findById(request.getCertificationId())
-                    .orElseThrow(() -> new CustomException("ER004", "certificationId"));
+                    .orElseThrow(() -> new CustomException(Constants.CODE_ER004, "certificationId"));
 
             EmployeeCertification employeeCertification = new EmployeeCertification();
             employeeCertification.setEmployee(persistedEmployee);
@@ -263,7 +262,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         Department department = departmentRepository.findById(request.getDepartmentId())
-                .orElseThrow(() -> new CustomException("ER004", "departmentId"));
+                .orElseThrow(() -> new CustomException(Constants.CODE_ER004, "departmentId"));
         employee.setDepartment(department);
     }
 
@@ -276,7 +275,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteEmployee(Long employeeId) {
         Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new CustomException("ER013", "ID"));
+                .orElseThrow(() -> new CustomException(Constants.CODE_ER013, "ID"));
 
         employeeCertificationRepository.deleteByEmployeeEmployeeId(employeeId);
         employeeRepository.delete(employee);
@@ -292,7 +291,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeDetailResponse getEmployeeById(Long employeeId) {
         // 1. Tìm nhân viên theo ID
         Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new CustomException("ER013", "ID"));
+                .orElseThrow(() -> new CustomException(Constants.CODE_ER013, "ID"));
 
         // 2. Khởi tạo đối tượng Response
         EmployeeDetailResponse employeeDetailResponse = new EmployeeDetailResponse();

@@ -134,13 +134,13 @@ public class EmployeeValidate {
         String field = Constants.FIELD_LOGIN_ID;
 
         if (isEmpty(loginId)) {
-            errors.add(new MessageResponse("ER001", Collections.singletonList(label), field));
-        } else if (!isValidMaxLength(loginId, 50)) {
-            errors.add(new MessageResponse("ER006", Arrays.asList(label, "50"), field));
+            errors.add(new MessageResponse(Constants.CODE_ER001, Collections.singletonList(label), field));
+        } else if (!isValidMaxLength(loginId, Constants.MAX_LENGTH_LOGIN_ID)) {
+            errors.add(new MessageResponse(Constants.CODE_ER006, Arrays.asList(label, String.valueOf(Constants.MAX_LENGTH_LOGIN_ID)), field));
         } else if (!Pattern.matches(Constants.LOGIN_ID_PATTERN, loginId) || Character.isDigit(loginId.charAt(0))) {
-            errors.add(new MessageResponse("ER019", null, field));
+            errors.add(new MessageResponse(Constants.CODE_ER019, null, field));
         } else if (employeeService.checkExistsEmployeeByLoginId(loginId, request.getEmployeeId())) {
-            errors.add(new MessageResponse("ER003", Collections.singletonList(label), field));
+            errors.add(new MessageResponse(Constants.CODE_ER003, Collections.singletonList(label), field));
         }
     }
 
@@ -154,9 +154,9 @@ public class EmployeeValidate {
         String field = Constants.FIELD_DEPARTMENT_ID;
 
         if (request.getDepartmentId() == null) {
-            errors.add(new MessageResponse("ER002", Collections.singletonList(label), field));
+            errors.add(new MessageResponse(Constants.CODE_ER002, Collections.singletonList(label), field));
         } else if (!departmentService.checkExistsDepartmentById(request.getDepartmentId())) {
-            errors.add(new MessageResponse("ER004", Collections.singletonList(label), field));
+            errors.add(new MessageResponse(Constants.CODE_ER004, Collections.singletonList(label), field));
         }
     }
 
@@ -170,22 +170,22 @@ public class EmployeeValidate {
         String nameLabel = getLabel(Constants.LABEL_EMPLOYEE_NAME, Constants.DEFAULT_LABEL_NAME);
         String nameField = Constants.FIELD_NAME;
         if (isEmpty(request.getEmployeeName())) {
-            errors.add(new MessageResponse("ER001", Collections.singletonList(nameLabel), nameField));
-        } else if (!isValidMaxLength(request.getEmployeeName(), 125)) {
-            errors.add(new MessageResponse("ER006", Arrays.asList(nameLabel, "125"), nameField));
+            errors.add(new MessageResponse(Constants.CODE_ER001, Collections.singletonList(nameLabel), nameField));
+        } else if (!isValidMaxLength(request.getEmployeeName(), Constants.MAX_LENGTH_NAME)) {
+            errors.add(new MessageResponse(Constants.CODE_ER006, Arrays.asList(nameLabel, String.valueOf(Constants.MAX_LENGTH_NAME)), nameField));
         }
 
         // Tên Kana (Yêu cầu Half-size Katakana)
         String kanaLabel = getLabel(Constants.LABEL_EMPLOYEE_NAME_KANA, Constants.DEFAULT_LABEL_NAME_KANA);
         String kanaField = Constants.FIELD_NAME_KANA;
         if (isEmpty(request.getEmployeeNameKana())) {
-            errors.add(new MessageResponse("ER001", Collections.singletonList(kanaLabel), kanaField));
+            errors.add(new MessageResponse(Constants.CODE_ER001, Collections.singletonList(kanaLabel), kanaField));
         } else {
-            if (!isValidMaxLength(request.getEmployeeNameKana(), 125)) {
-                errors.add(new MessageResponse("ER006", Arrays.asList(kanaLabel, "125"), kanaField));
+            if (!isValidMaxLength(request.getEmployeeNameKana(), Constants.MAX_LENGTH_NAME_KANA)) {
+                errors.add(new MessageResponse(Constants.CODE_ER006, Arrays.asList(kanaLabel, String.valueOf(Constants.MAX_LENGTH_NAME_KANA)), kanaField));
             }
             if (!Pattern.matches(Constants.HALFSIDE_KATAKANA_PATTERN, request.getEmployeeNameKana())) {
-                errors.add(new MessageResponse("ER009", Collections.singletonList(kanaLabel), kanaField));
+                errors.add(new MessageResponse(Constants.CODE_ER009, Collections.singletonList(kanaLabel), kanaField));
             }
         }
 
@@ -193,22 +193,22 @@ public class EmployeeValidate {
         String birthLabel = getLabel(Constants.LABEL_BIRTH_DATE, Constants.DEFAULT_LABEL_BIRTH_DATE);
         String birthField = Constants.FIELD_BIRTH_DATE;
         if (isEmpty(request.getEmployeeBirthDate())) {
-            errors.add(new MessageResponse("ER001", Collections.singletonList(birthLabel), birthField));
+            errors.add(new MessageResponse(Constants.CODE_ER001, Collections.singletonList(birthLabel), birthField));
         } else if (!isValidDateFormat(request.getEmployeeBirthDate())) {
-            errors.add(new MessageResponse("ER011", Collections.singletonList(birthLabel), birthField));
+            errors.add(new MessageResponse(Constants.CODE_ER011, Collections.singletonList(birthLabel), birthField));
         }
 
         // Email
         String emailLabel = getLabel(Constants.LABEL_EMAIL, Constants.DEFAULT_LABEL_EMAIL);
         String emailField = Constants.FIELD_EMAIL;
         if (isEmpty(request.getEmployeeEmail())) {
-            errors.add(new MessageResponse("ER001", Collections.singletonList(emailLabel), emailField));
+            errors.add(new MessageResponse(Constants.CODE_ER001, Collections.singletonList(emailLabel), emailField));
         } else {
-            if (!isValidMaxLength(request.getEmployeeEmail(), 125)) {
-                errors.add(new MessageResponse("ER006", Arrays.asList(emailLabel, "125"), emailField));
+            if (!isValidMaxLength(request.getEmployeeEmail(), Constants.MAX_LENGTH_EMAIL)) {
+                errors.add(new MessageResponse(Constants.CODE_ER006, Arrays.asList(emailLabel, String.valueOf(Constants.MAX_LENGTH_EMAIL)), emailField));
             }
             if (!Pattern.matches(Constants.EMAIL_PATTERN, request.getEmployeeEmail())) {
-                errors.add(new MessageResponse("ER005", Arrays.asList(emailLabel, "メールアドレス"), emailField));
+                errors.add(new MessageResponse(Constants.CODE_ER005, Arrays.asList(emailLabel, "メールアドレス"), emailField));
             }
         }
 
@@ -216,82 +216,80 @@ public class EmployeeValidate {
         String telLabel = getLabel(Constants.LABEL_TELEPHONE, Constants.DEFAULT_LABEL_TELEPHONE);
         String telField = Constants.FIELD_TELEPHONE;
         if (isEmpty(request.getEmployeeTelephone())) {
-            errors.add(new MessageResponse("ER001", Collections.singletonList(telLabel), telField));
+            errors.add(new MessageResponse(Constants.CODE_ER001, Collections.singletonList(telLabel), telField));
         } else {
-            if (!isValidMaxLength(request.getEmployeeTelephone(), 50)) {
-                errors.add(new MessageResponse("ER006", Arrays.asList(telLabel, "50"), telField));
+            if (!isValidMaxLength(request.getEmployeeTelephone(), Constants.MAX_LENGTH_TELEPHONE)) {
+                errors.add(new MessageResponse(Constants.CODE_ER006, Arrays.asList(telLabel, String.valueOf(Constants.MAX_LENGTH_TELEPHONE)), telField));
             }
             if (!isHalfsizeNumber(request.getEmployeeTelephone())) {
-                errors.add(new MessageResponse("ER008", Collections.singletonList(telLabel), telField));
+                errors.add(new MessageResponse(Constants.CODE_ER008, Collections.singletonList(telLabel), telField));
             }
         }
     }
 
     /**
-     * Validate mật khẩu và xác nhận mật khẩu.
-     * @param request Dữ liệu request.
-     * @param errors Danh sách lỗi để add vào.
+     * Kiểm tra mật khẩu và xác nhận mật khẩu.
+     * @param request Đối tượng chứa dữ liệu yêu cầu.
+     * @param errors Danh sách lỗi để thêm vào nếu có.
      */
     private void validatePassword(EmployeeRequest request, List<MessageResponse> errors) {
+        // Chỉ validate mật khẩu khi thêm mới nhân viên
+        if (request.getEmployeeId() != null) {
+            return;
+        }
+
         String password = request.getEmployeeLoginPassword();
         String confirm = request.getEmployeeLoginPasswordConfirm();
         String label = getLabel(Constants.LABEL_PASSWORD, Constants.DEFAULT_LABEL_PASSWORD);
         String field = Constants.FIELD_PASSWORD;
 
-        if (request.getEmployeeId() == null) { // Thêm mới
-            if (isEmpty(password)) {
-                errors.add(new MessageResponse("ER001", Collections.singletonList(label), field));
-            } else {
-                if (!isValidMinLength(password, 8) || !isValidMaxLength(password, 50)) {
-                    errors.add(new MessageResponse("ER007", Arrays.asList(label, "8", "50"), field));
-                }
+        if (isEmpty(password)) {
+            errors.add(new MessageResponse(Constants.CODE_ER001, Collections.singletonList(label), field));
+        } else {
+            if (!isValidMinLength(password, Constants.MIN_LENGTH_PASSWORD) || !isValidMaxLength(password, Constants.MAX_LENGTH_PASSWORD)) {
+                errors.add(new MessageResponse(Constants.CODE_ER007, Arrays.asList(label, String.valueOf(Constants.MIN_LENGTH_PASSWORD), String.valueOf(Constants.MAX_LENGTH_PASSWORD)), field));
             }
-        } else if (!isEmpty(password)) { // Cập nhật (Nếu nhập pass mới)
-            if (!isValidMinLength(password, 8) || !isValidMaxLength(password, 50)) {
-                errors.add(new MessageResponse("ER007", Arrays.asList(label, "8", "50"), field));
+            if (!password.equals(confirm)) {
+                errors.add(new MessageResponse(Constants.CODE_ER017, null, Constants.FIELD_PASSWORD_CONFIRM));
             }
-        }
-
-        if (!isEmpty(password) && !password.equals(confirm)) {
-            errors.add(new MessageResponse("ER017", null, Constants.FIELD_PASSWORD_CONFIRM));
         }
     }
 
     /**
-     * Validate thông tin chứng chỉ đi kèm.
-     * @param request Dữ liệu request.
-     * @param errors Danh sách lỗi để add vào.
+     * Kiểm tra thông tin chứng chỉ đi kèm.
+     * @param request Đối tượng chứa dữ liệu yêu cầu.
+     * @param errors Danh sách lỗi để thêm vào nếu có.
      */
     private void validateCertification(EmployeeRequest request, List<MessageResponse> errors) {
         if (request.getCertificationId() == null) return;
 
         if (!certificationService.checkExistsCertificationById(request.getCertificationId())) {
-            errors.add(new MessageResponse("ER004", Collections.singletonList(getLabel(Constants.LABEL_CERT_NAME, Constants.DEFAULT_LABEL_CERT_NAME)), Constants.FIELD_CERT_ID));
+            errors.add(new MessageResponse(Constants.CODE_ER004, Collections.singletonList(getLabel(Constants.LABEL_CERT_NAME, Constants.DEFAULT_LABEL_CERT_NAME)), Constants.FIELD_CERT_ID));
         }
 
         // Ngày cấp
         String startLabel = getLabel(Constants.LABEL_CERT_START_DATE, Constants.DEFAULT_LABEL_CERT_START_DATE);
         String startField = Constants.FIELD_CERT_START_DATE;
         if (isEmpty(request.getCertificationStartDate())) {
-            errors.add(new MessageResponse("ER001", Collections.singletonList(startLabel), startField));
+            errors.add(new MessageResponse(Constants.CODE_ER001, Collections.singletonList(startLabel), startField));
         } else if (!isValidDateFormat(request.getCertificationStartDate())) {
-            errors.add(new MessageResponse("ER011", Collections.singletonList(startLabel), startField));
+            errors.add(new MessageResponse(Constants.CODE_ER011, Collections.singletonList(startLabel), startField));
         }
 
         // Ngày hết hạn
         String endLabel = getLabel(Constants.LABEL_CERT_END_DATE, Constants.DEFAULT_LABEL_CERT_END_DATE);
         String endField = Constants.FIELD_CERT_END_DATE;
         if (isEmpty(request.getCertificationEndDate())) {
-            errors.add(new MessageResponse("ER001", Collections.singletonList(endLabel), endField));
+            errors.add(new MessageResponse(Constants.CODE_ER001, Collections.singletonList(endLabel), endField));
         } else if (!isValidDateFormat(request.getCertificationEndDate())) {
-            errors.add(new MessageResponse("ER011", Collections.singletonList(endLabel), endField));
+            errors.add(new MessageResponse(Constants.CODE_ER011, Collections.singletonList(endLabel), endField));
         } else if (isValidDateFormat(request.getCertificationStartDate())) {
             // So sánh ngày
             try {
                 LocalDate start = LocalDate.parse(request.getCertificationStartDate(), dateFormatter);
                 LocalDate end = LocalDate.parse(request.getCertificationEndDate(), dateFormatter);
                 if (!end.isAfter(start)) {
-                    errors.add(new MessageResponse("ER012", null, endField));
+                    errors.add(new MessageResponse(Constants.CODE_ER012, null, endField));
                 }
             } catch (Exception ignored) {}
         }
@@ -300,9 +298,9 @@ public class EmployeeValidate {
         String scoreLabel = getLabel(Constants.LABEL_CERT_SCORE, Constants.DEFAULT_LABEL_CERT_SCORE);
         String scoreField = Constants.FIELD_CERT_SCORE;
         if (isEmpty(request.getEmployeeCertificationScore())) {
-            errors.add(new MessageResponse("ER001", Collections.singletonList(scoreLabel), scoreField));
+            errors.add(new MessageResponse(Constants.CODE_ER001, Collections.singletonList(scoreLabel), scoreField));
         } else if (!isHalfsizeNumber(request.getEmployeeCertificationScore())) {
-            errors.add(new MessageResponse("ER018", Collections.singletonList(scoreLabel), scoreField));
+            errors.add(new MessageResponse(Constants.CODE_ER018, Collections.singletonList(scoreLabel), scoreField));
         }
     }
 

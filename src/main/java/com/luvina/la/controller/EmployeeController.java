@@ -59,16 +59,10 @@ public class EmployeeController {
      */
     @PostMapping("/employees")
     public ResponseEntity<Object> addEmployee(@RequestBody EmployeeRequest request) {
-        // 1. Thực hiện validate lại lần cuối
-        List<MessageResponse> errors = employeeValidate.validate(request);
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        // 2. Gọi service Thêm mới
+        // 1. Gọi service Thêm mới
         Long newId = employeeService.addEmployee(request);
         
-        // 3. Trả về response theo đúng cấu trúc thiết kế
+        // 2. Trả về response theo đúng cấu trúc thiết kế
         return ResponseEntity.ok(UpdateEmployeeResponse.success(newId, "MSG001"));
     }
 
@@ -83,16 +77,10 @@ public class EmployeeController {
         // 1. Gán ID từ PathVariable vào request để đồng bộ
         request.setEmployeeId(id);
 
-        // 2. Thực hiện validate dữ liệu
-        List<MessageResponse> errors = employeeValidate.validate(request);
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        // 3. Gọi service Cập nhật
+        // 2. Gọi service Cập nhật
         Long updatedId = employeeService.updateEmployee(request);
         
-        // 4. Trả về response theo đúng cấu trúc thiết kế
+        // 3. Trả về response theo đúng cấu trúc thiết kế
         return ResponseEntity.ok(UpdateEmployeeResponse.success(updatedId, "MSG002"));
     }
 
@@ -135,7 +123,7 @@ public class EmployeeController {
 
         if (totalRecords > 0) {
             if (off.longValue() >= totalRecords) {
-                throw new CustomException(Constants.CODE_ERROR_PAGE_NOT_FOUND);
+                throw new CustomException(Constants.CODE_ER022);
             }
             employees = employeeService.getListEmployee(
                     name, deptId, sortName, sortCert, sortEnd, lim, off
@@ -159,7 +147,7 @@ public class EmployeeController {
     public ResponseEntity<EmployeeDetailResponse> getEmployee(@PathVariable("id") Long id) {
         // 1. Validate ID 
         if (id == null) {
-            throw new CustomException("ER001", "ID");
+            throw new CustomException(Constants.CODE_ER001, "ID");
         }
         
         // 2. Gọi service lấy dữ liệu (Nếu không tìm thấy, Service sẽ ném CustomException ER013)

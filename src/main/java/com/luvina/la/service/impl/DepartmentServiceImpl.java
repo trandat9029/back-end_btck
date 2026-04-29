@@ -1,6 +1,6 @@
 /**
- * Copyright(C) 2026 - Luvina
- * [DepartmentServiceImpl.java], 24/04/2026 [tranledat]
+ * Copyright(C) 2026 Luvina
+ * [DepartmentService.java], 13/04/2026 tranledat
  */
 package com.luvina.la.service.impl;
 

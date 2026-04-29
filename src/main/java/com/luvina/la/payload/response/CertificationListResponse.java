@@ -1,6 +1,6 @@
 /**
- * Copyright(C) 2026 - Luvina
- * [CertificationListResponse.java], 24/04/2026 [tranledat]
+ * Copyright(C) 2026 Luvina Software
+ * app.java 00/00/2026 tranledat
  */
 package com.luvina.la.payload.response;
 
