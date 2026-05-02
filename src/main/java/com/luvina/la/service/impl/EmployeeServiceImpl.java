@@ -124,6 +124,16 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     /**
+     * Kiểm tra xem ID nhân viên có tồn tại trong hệ thống hay không.
+     * @param employeeId ID nhân viên cần kiểm tra.
+     * @return true nếu tồn tại, false nếu không.
+     */
+    @Override
+    public boolean checkExistsEmployeeById(Long employeeId) {
+        return employeeRepository.existsById(employeeId);
+    }
+
+    /**
      * Escape ký tự đặc biệt cho mệnh đề LIKE trong SQL.
      * @param value Chuỗi tìm kiếm đầu vào.
      * @return Chuỗi đã được escape cho mệnh đề LIKE.

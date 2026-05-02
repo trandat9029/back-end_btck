@@ -44,8 +44,26 @@ public class EmployeeController {
      * @return Kết quả validate (Danh sách lỗi hoặc mã thành công).
      */
     @PostMapping("/employees/validate")
-    public ResponseEntity<Object> validateEmployee(@RequestBody EmployeeRequest request) {
-        List<MessageResponse> errors = employeeValidate.validate(request);
+    public ResponseEntity<Object> validateEmployee(
+            @RequestBody EmployeeRequest request,
+            @RequestParam(value = "step", required = false, defaultValue = Constants.VALIDATE_STEP_ALL) String step) {
+        
+        List<MessageResponse> errors = new ArrayList<>();
+
+        if (Constants.VALIDATE_STEP_INPUT.equals(step)) {
+            // Gọi từ ADM004: Nhấn Submit để sang ADM005
+            if (request.getEmployeeId() == null) {
+                // Mode THÊM MỚI
+                errors = employeeValidate.validateLoginIdOnly(request);
+            } else {
+                // Mode CHỈNH SỬA
+                errors = employeeValidate.validateEmployeeExistsOnly(request);
+            }
+        } else {
+            // Gọi từ ADM005 hoặc mặc định: Kiểm tra toàn bộ
+            errors = employeeValidate.validate(request);
+        }
+
         if (!errors.isEmpty()) {
             return ResponseEntity.badRequest().body(errors);
         }

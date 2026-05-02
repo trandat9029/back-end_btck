@@ -59,6 +59,15 @@ public interface EmployeeService {
     boolean checkExistsEmployeeByLoginId(String loginId, Long employeeId);
 
     /**
+     * Kiểm tra xem ID nhân viên có tồn tại trong hệ thống hay không.
+     * Dùng để validate ER013.
+     * 
+     * @param employeeId ID nhân viên cần kiểm tra.
+     * @return true nếu tồn tại, false nếu không.
+     */
+    boolean checkExistsEmployeeById(Long employeeId);
+
+    /**
      * Thêm mới nhân viên.
      * Bao gồm cả việc lưu thông tin chứng chỉ vào bảng employees_certifications.
      *

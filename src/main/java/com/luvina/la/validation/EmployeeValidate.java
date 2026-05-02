@@ -71,6 +71,33 @@ public class EmployeeValidate {
     }
 
     /**
+     * Dành riêng cho ADM004 (Add): Chỉ validate Login ID
+     */
+    public List<MessageResponse> validateLoginIdOnly(EmployeeRequest request) {
+        List<MessageResponse> errors = new ArrayList<>();
+        validateLoginId(request, errors);
+        return errors;
+    }
+
+    /**
+     * Dành riêng cho ADM004 (Edit): Kiểm tra ID nhân viên
+     */
+    public List<MessageResponse> validateEmployeeExistsOnly(EmployeeRequest request) {
+        List<MessageResponse> errors = new ArrayList<>();
+        
+        // 1. Nếu không tồn tại parameter ID
+        if (request.getEmployeeId() == null) {
+            errors.add(new MessageResponse("ER001", Collections.singletonList("ID"), "employeeId"));
+        } 
+        // 2. Nếu không tồn tại trong DB
+        else if (!employeeService.checkExistsEmployeeById(request.getEmployeeId())) {
+            errors.add(new MessageResponse("ER013", Collections.singletonList("ID"), "employeeId"));
+        }
+        
+        return errors;
+    }
+
+    /**
      * Kiểm tra chuỗi có trống hay không.
      * @param str Chuỗi cần kiểm tra.
      * @return true nếu trống, false nếu không.
