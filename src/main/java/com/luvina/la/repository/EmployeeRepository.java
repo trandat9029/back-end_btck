@@ -47,7 +47,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     @Query(value = "SELECT COUNT(e.employee_id) FROM employees e " +
             "INNER JOIN departments d ON e.department_id = d.department_id " +
             "WHERE e.employee_login_id != 'admin' " +
-            "AND (:employeeName IS NULL OR :employeeName = '' OR e.employee_name LIKE CONCAT('%', :employeeName, '%') ESCAPE '\\\\') " +
+            "AND (:employeeName IS NULL OR :employeeName = '' OR CONCAT(' ', e.employee_name, ' ') LIKE CONCAT('% ', :employeeName, ' %') ESCAPE '\\\\') " +
             "AND (:departmentId IS NULL OR e.department_id = :departmentId)",
             nativeQuery = true)
     Long countEmployeesWithFilter(
@@ -93,7 +93,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
             "    WHERE ranked.row_num = 1 " +
             ") rc ON e.employee_id = rc.employee_id " +
             "WHERE e.employee_login_id != 'admin' " +
-            "AND (:employeeName IS NULL OR e.employee_name LIKE CONCAT('%', :employeeName, '%') ESCAPE '\\\\') " +
+            "AND (:employeeName IS NULL OR CONCAT(' ', e.employee_name, ' ') LIKE CONCAT('% ', :employeeName, ' %') ESCAPE '\\\\') " +
             "AND (:departmentId IS NULL OR e.department_id = :departmentId) " +
             "ORDER BY " +
             "CASE WHEN :sortEmployeeName = 'asc' THEN e.employee_name END ASC, " +
