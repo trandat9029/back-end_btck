@@ -20,4 +20,5 @@ public class CertificationDTO {
 
     private Long certificationId;
     private String certificationName;
+    private Integer certificationLevel;
 }

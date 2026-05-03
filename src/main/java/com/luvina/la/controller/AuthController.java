@@ -4,7 +4,6 @@
  */
 package com.luvina.la.controller;
 
-
 import com.luvina.la.config.jwt.AuthUserDetails;
 import com.luvina.la.config.jwt.JwtTokenProvider;
 import com.luvina.la.config.jwt.UserDetailsServiceImpl;
@@ -13,6 +12,7 @@ import com.luvina.la.payload.response.LoginResponse;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,26 +26,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controller xử lý các yêu cầu liên quan đến xác thực và đăng nhập.
+ * 
+ * @author tranledat
+ */
 @RestController
+@RequiredArgsConstructor
 public class AuthController {
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
-    final JwtTokenProvider tokenProvider;
-    final AuthenticationManager authenticationManager;
-    final UserDetailsServiceImpl userDetailsService;
-
-    AuthController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, UserDetailsServiceImpl userDetailsService) {
-        this.authenticationManager = authenticationManager;
-        this.tokenProvider = jwtTokenProvider;
-        this.userDetailsService = userDetailsService;
-    }
+    private final JwtTokenProvider tokenProvider;
+    private final AuthenticationManager authenticationManager;
+    private final UserDetailsServiceImpl userDetailsService;
 
     /**
-     * Login api
+     * API Đăng nhập hệ thống.
      *
-     * @param loginRequest
-     * @param request
-     * @return
+     * @param loginRequest thông tin đăng nhập từ client
+     * @param request      đối tượng HttpServletRequest
+     * @return Đối tượng LoginResponse chứa token hoặc thông báo lỗi
      */
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
@@ -54,9 +54,7 @@ public class AuthController {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getUsername(),
-                            loginRequest.getPassword()
-                    )
-            );
+                            loginRequest.getPassword()));
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String accessToken = tokenProvider.generateToken((AuthUserDetails) authentication.getPrincipal());
             return new LoginResponse(accessToken);
@@ -65,16 +63,17 @@ public class AuthController {
             errors.put("code", "100");
         } catch (Exception ex) {
             log.warn(ex.getMessage());
-            // unknow error
+            // Lỗi không xác định
             errors.put("code", "000");
         }
         return new LoginResponse(errors);
     }
 
     /**
-     * test token API
+     * API kiểm tra tính hợp lệ của Token hiện tại.
+     * Thường dùng để frontend kiểm tra trạng thái login khi reload trang.
      *
-     * @return
+     * @return Bản đồ chứa thông báo "Token is valid" nếu truy cập được vào đây
      */
     @RequestMapping("/test-auth")
     public Map<String, String> testAuth() {

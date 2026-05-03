@@ -5,60 +5,21 @@
 package com.luvina.la.repository;
 
 import com.luvina.la.entity.EmployeeCertification;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-
 /**
- * Repository truy van du lieu quan he nhan vien va chung chi.
- *
+ * Interface Repository cung cấp các phương thức truy cập dữ liệu bảng employees_certifications.
+ * 
  * @author tranledat
  */
 @Repository
-public interface EmployeeCertificationRepository extends CrudRepository<EmployeeCertification, Long> {
+public interface EmployeeCertificationRepository extends JpaRepository<EmployeeCertification, Long> {
 
     /**
-     * Tim quan he nhan vien-chung chi theo id.
-     *
-     * @param employeeCertificationId Ma quan he nhan vien-chung chi.
-     * @return Optional chua thong tin quan he.
+     * Xóa tất cả các chứng chỉ của một nhân viên theo employeeId
+     * 
+     * @param employeeId ID của nhân viên cần xóa chứng chỉ
      */
-    Optional<EmployeeCertification> findByEmployeeCertificationId(Long employeeCertificationId);
-
-    /**
-     * Lay danh sach chung chi theo ma nhan vien.
-     *
-     * @param employeeId Ma nhan vien.
-     * @return Danh sach thong tin nhan vien-chung chi.
-     */
-    List<EmployeeCertification> findByEmployeeEmployeeId(Long employeeId);
-
-    /**
-     * Lay danh sach nhan vien theo ma chung chi.
-     *
-     * @param certificationId Ma chung chi.
-     * @return Danh sach thong tin nhan vien-chung chi.
-     */
-    List<EmployeeCertification> findByCertificationCertificationId(Long certificationId);
-
-    /**
-     * Lấy danh sách chứng chỉ của nhân viên, sắp xếp theo Certification Level (Tăng dần).
-     * @param employeeId Ma nhan vien.
-     * @return Danh sách chứng chỉ nhân viên.
-     */
-    @Query("SELECT ec FROM EmployeeCertification ec WHERE ec.employee.employeeId = :employeeId " +
-           "ORDER BY ec.certification.certificationLevel ASC")
-    List<EmployeeCertification> findCertsByEmployeeId(@Param("employeeId") Long employeeId);
-
-    /**
-     * Xóa toàn bộ chứng chỉ của một nhân viên.
-     * @param employeeId Ma nhan vien.
-     */
-    @org.springframework.data.jpa.repository.Modifying
-    @Query("DELETE FROM EmployeeCertification ec WHERE ec.employee.employeeId = :employeeId")
-    void deleteByEmployeeEmployeeId(@Param("employeeId") Long employeeId);
+    void deleteAllByEmployeeId(Long employeeId);
 }

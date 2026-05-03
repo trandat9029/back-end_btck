@@ -1,194 +1,215 @@
 /**
- * Copyright(C) 2026 - Luvina
- * [EmployeeController.java], 24/04/2026 tranledat
+ * Copyright(C) 2026 Luvina
+ * [EmployeeController.java], 09/04/2026 tranledat
  */
 package com.luvina.la.controller;
 
-import com.luvina.la.config.Constants;
-import com.luvina.la.dto.EmployeeDTO;
-import com.luvina.la.exception.CustomException;
+import com.luvina.la.constant.AppConstants;
+import com.luvina.la.constant.MessageCode;
+import com.luvina.la.exception.ValidationException;
+import com.luvina.la.payload.request.EmployeeListRequest;
 import com.luvina.la.payload.request.EmployeeRequest;
-import com.luvina.la.payload.response.EmployeeDetailResponse;
+import com.luvina.la.payload.response.EmployeeResponse;
 import com.luvina.la.payload.response.EmployeeListResponse;
 import com.luvina.la.payload.response.MessageResponse;
-import com.luvina.la.payload.response.UpdateEmployeeResponse;
 import com.luvina.la.service.EmployeeService;
 import com.luvina.la.validation.EmployeeValidate;
-import com.luvina.la.validation.ParamValidate;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.MessageSource;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 /**
- * Controller quản lý các API liên quan đến nhân viên (Employee).
+ * Controller xử lý các yêu cầu liên quan đến nhân viên.
+ * 
  * @author tranledat
  */
 @RestController
+@RequestMapping("/employee")
 @RequiredArgsConstructor
 public class EmployeeController {
 
     private final EmployeeService employeeService;
-    private final MessageSource messageSource;
-    private final ParamValidate paramValidate;
-    private final EmployeeValidate employeeValidate;
-    private final Locale defaultLocale = Locale.JAPANESE;
+    private final EmployeeValidate employeeValidator;
 
-    /**
-     * API validate dữ liệu cho màn hình ADM004/ADM005.
-     * @param request Dữ liệu nhân viên gửi từ form.
-     * @return Kết quả validate (Danh sách lỗi hoặc mã thành công).
-     */
-    @PostMapping("/employees/validate")
-    public ResponseEntity<Object> validateEmployee(
-            @RequestBody EmployeeRequest request,
-            @RequestParam(value = "step", required = false, defaultValue = Constants.VALIDATE_STEP_ALL) String step) {
-        
-        List<MessageResponse> errors = new ArrayList<>();
-
-        if (Constants.VALIDATE_STEP_INPUT.equals(step)) {
-            // Gọi từ ADM004: Nhấn Submit để sang ADM005
-            if (request.getEmployeeId() == null) {
-                // Mode THÊM MỚI
-                errors = employeeValidate.validateLoginIdOnly(request);
-            } else {
-                // Mode CHỈNH SỬA
-                errors = employeeValidate.validateEmployeeExistsOnly(request);
-            }
-        } else {
-            // Gọi từ ADM005 hoặc mặc định: Kiểm tra toàn bộ
-            errors = employeeValidate.validate(request);
-        }
-
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-        return ResponseEntity.ok(new MessageResponse(Constants.CODE_SUCCESS, null));
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        StringTrimmerEditor stringTrimmer = new StringTrimmerEditor(true);
+        binder.registerCustomEditor(String.class, stringTrimmer);
     }
 
     /**
-     * API thực hiện thêm mới thông tin nhân viên vào hệ thống.
-     * @param request Đối tượng EmployeeRequest chứa toàn bộ thông tin nhân viên từ Form.
-     * @return ResponseEntity Đối tượng chứa mã trạng thái và thông báo kết quả thực hiện (code 200, employeeId, message object).
+     * API Lấy danh sách nhân viên có phân trang, tìm kiếm và sắp xếp.
+     * 
+     * @param request Đối tượng chứa các tham số lọc, tìm kiếm và phân trang
+     * @return ResponseEntity chứa EmployeeListResponse
      */
-    @PostMapping("/employees")
-    public ResponseEntity<Object> addEmployee(@RequestBody EmployeeRequest request) {
-        // 1. Gọi service Thêm mới
-        Long newId = employeeService.addEmployee(request);
-        
-        // 2. Lấy message thành công từ messageSource (MSG001)
-        String message = messageSource.getMessage("MSG001", null, "Registration Successful", defaultLocale);
-        
-        // 3. Trả về response theo đúng cấu trúc thiết kế
-        return ResponseEntity.ok(UpdateEmployeeResponse.success(newId, "MSG001", message));
-    }
-
-    /**
-     * API thực hiện cập nhật thông tin nhân viên vào hệ thống.
-     * @param id ID của nhân viên cần cập nhật.
-     * @param request Đối tượng EmployeeRequest chứa toàn bộ thông tin nhân viên từ Form.
-     * @return ResponseEntity Đối tượng chứa mã trạng thái và thông báo kết quả thực hiện (code 200, employeeId, message object).
-     */
-    @PutMapping("/employees/{id}")
-    public ResponseEntity<Object> updateEmployee(@PathVariable("id") Long id, @RequestBody EmployeeRequest request) {
-        // 1. Gán ID từ PathVariable vào request để đồng bộ
-        request.setEmployeeId(id);
-
-        // 2. Gọi service Cập nhật
-        Long updatedId = employeeService.updateEmployee(request);
-        
-        // 3. Lấy message thành công từ messageSource (MSG002)
-        String message = messageSource.getMessage("MSG002", null, "Update Successful", defaultLocale);
-        
-        // 4. Trả về response theo đúng cấu trúc thiết kế
-        return ResponseEntity.ok(UpdateEmployeeResponse.success(updatedId, "MSG002", message));
-    }
-
-    /**
-     * API lấy danh sách nhân viên (ADM002).
-     * @param employeeName Tên nhân viên cần tìm kiếm
-     * @param departmentId ID phòng ban cần lọc
-     * @param ordEmployeeName Thứ tự sắp xếp theo tên (asc/desc)
-     * @param ordCertificationName Thứ tự sắp xếp theo tên chứng chỉ (asc/desc)
-     * @param ordEndDate Thứ tự sắp xếp theo ngày hết hạn (asc/desc)
-     * @param offset Vị trí bắt đầu lấy dữ liệu
-     * @param limit Số lượng bản ghi tối đa
-     * @return ResponseEntity chứa danh sách nhân viên và tổng số bản ghi.
-     */
-    @GetMapping("/employees")
-    public ResponseEntity<EmployeeListResponse> getEmployees(
-            @RequestParam(value = "employee_name", required = false) String employeeName,
-            @RequestParam(value = "department_id", required = false) String departmentId,
-            @RequestParam(value = "ord_employee_name", required = false) String ordEmployeeName,
-            @RequestParam(value = "ord_certification_name", required = false) String ordCertificationName,
-            @RequestParam(value = "ord_end_date", required = false) String ordEndDate,
-            @RequestParam(value = "offset", required = false) String offset,
-            @RequestParam(value = "limit", required = false) String limit) {
-
-        // 1. Validate các tham số đầu vào bằng hàm tập trung trong lớp Validate
-        paramValidate.checkValidateParams(ordEmployeeName, ordCertificationName, ordEndDate, offset, limit, departmentId);
-
-        // 2. Thực hiện chuẩn hóa dữ liệu đầu vào (Trim, gán giá trị mặc định)
-        String name = paramValidate.normalizeInput(employeeName);
-        Long deptId = paramValidate.parseLongOrNull(departmentId);
-        Integer off = paramValidate.parseIntegerOrDefault(offset, 0);
-        Integer lim = paramValidate.parseIntegerOrDefault(limit, 5);
-        String sortName = paramValidate.normalizeSortOrderOrDefault(ordEmployeeName, "asc");
-        String sortCert = paramValidate.normalizeSortOrderOrDefault(ordCertificationName, "desc");
-        String sortEnd = paramValidate.normalizeSortOrderOrDefault(ordEndDate, "asc");
-
-        // 3. Xử lý logic lấy danh sách
-        Long totalRecords = employeeService.countEmployeesWithFilter(name, deptId);
-        List<EmployeeDTO> employees = new ArrayList<>();
-
-        if (totalRecords > 0) {
-            if (off.longValue() >= totalRecords) {
-                throw new CustomException(Constants.CODE_ER022);
-            }
-            employees = employeeService.getListEmployee(
-                    name, deptId, sortName, sortCert, sortEnd, lim, off
-            );
-        }
-
-        // 4. Đóng gói response
+    @GetMapping
+    public ResponseEntity<EmployeeListResponse> getEmployees(@Valid EmployeeListRequest request) {
         EmployeeListResponse response = new EmployeeListResponse();
-        response.setCode(Constants.CODE_SUCCESS);
-        response.setTotalRecords(totalRecords);
-        response.setEmployees(employees);
+        Long total = employeeService.getTotalRecords(request.getEmployeeName(), request.getDepartmentId());
+
+        if (total > 0) {
+            response.setEmployees(employeeService.getEmployees(
+                    request.getEmployeeName(),
+                    request.getDepartmentId(),
+                    request.getOrdEmployeeName(),
+                    request.getOrdCertificationName(),
+                    request.getOrdEndDate(),
+                    request.getOffset(),
+                    request.getLimit()));
+        } else {
+            response.setEmployees(new ArrayList<>());
+        }
+
+        response.setCode(HttpStatus.OK.value());
+        response.setTotalRecords(total);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * API thực hiện lấy thông tin chi tiết của một nhân viên phục vụ màn hình xem chi tiết (ADM003) hoặc chỉnh sửa (ADM004).
-     * @param id Mã ID của nhân viên cần thực hiện truy vấn thông tin.
-     * @return ResponseEntity Đối tượng EmployeeDetailResponse chứa toàn bộ thông tin chi tiết của nhân viên.
+     * API Thêm mới nhân viên vào hệ thống.
+     * Thực hiện validate nghiệp vụ trước khi lưu vào database.
+     * 
+     * @param employeeRequest Dữ liệu nhân viên cần thêm mới
+     * @param mode Chế độ validate (SUBMIT hoặc CONFIRM)
+     * @return ResponseEntity chứa EmployeeResponse với mã thành công và thông báo
+     * @throws ValidationException Nếu dữ liệu không vượt qua được bước validate nghiệp vụ
      */
-    @GetMapping("/employees/{id}")
-    public ResponseEntity<EmployeeDetailResponse> getEmployee(@PathVariable("id") Long id) {
-        // 1. Validate ID 
-        if (id == null) {
-            throw new CustomException(Constants.CODE_ER001, "ID");
-        }
+    @PostMapping
+    public ResponseEntity<EmployeeResponse> addEmployee(
+            @RequestBody EmployeeRequest employeeRequest,
+            @RequestParam(value = AppConstants.MODE, defaultValue = AppConstants.MODE_CONFIRM) String mode) {
         
-        // 2. Gọi service lấy dữ liệu (Nếu không tìm thấy, Service sẽ ném CustomException ER013)
-        return ResponseEntity.ok(employeeService.getEmployeeById(id));
+        // Điều phối validate dựa trên mode
+        MessageResponse validateRes;
+        if (AppConstants.MODE_SUBMIT.equals(mode)) {
+            validateRes = employeeValidator.validateForSubmit(employeeRequest);
+        } else {
+            validateRes = employeeValidator.validateForConfirm(employeeRequest);
+        }
+
+        if (validateRes != null) {
+            throw new ValidationException(validateRes);
+        }
+
+        employeeService.addEmployee(employeeRequest);
+
+        EmployeeResponse employeeResponse = EmployeeResponse.builder()
+                .code(String.valueOf(HttpStatus.OK.value()))
+                .employeeId(employeeRequest.getEmployeeId())
+                .message(MessageResponse.builder()
+                        .code(MessageCode.MSG_CODE_MSG001)
+                        .params(new ArrayList<>())
+                        .build())
+                .build();
+        return ResponseEntity.ok(employeeResponse);
     }
 
     /**
-     * API thực hiện xóa thông tin một nhân viên khỏi hệ thống dựa trên ID nhân viên.
-     * @param id Mã ID của nhân viên cần thực hiện xóa.
-     * @return ResponseEntity Đối tượng chứa mã trạng thái và thông báo kết quả xóa thành công.
+     * API Validate dữ liệu nhân viên (Dùng cho màn hình ADM004/ADM005).
+     * 
+     * @param employeeRequest Dữ liệu nhân viên cần kiểm tra
+     * @param mode Chế độ validate (SUBMIT hoặc CONFIRM)
+     * @return ResponseEntity chứa EmployeeResponse với mã thành công 200 nếu dữ liệu hợp lệ
+     * @throws ValidationException Nếu dữ liệu có lỗi nghiệp vụ
      */
-    @DeleteMapping("/employees/{id}")
-    public ResponseEntity<Object> deleteEmployee(@PathVariable("id") Long id) {
-        // 1. Gọi service thực hiện xóa
-        employeeService.deleteEmployee(id);
+    @PostMapping("/validate")
+    public ResponseEntity<EmployeeResponse> validateEmployee(
+            @RequestBody EmployeeRequest employeeRequest,
+            @RequestParam(value = AppConstants.MODE, defaultValue = AppConstants.MODE_CONFIRM) String mode) {
         
-        String successMsg = messageSource.getMessage("MSG003", null, "Delete Success", Locale.JAPANESE);
-        return ResponseEntity.ok(new MessageResponse(Constants.CODE_SUCCESS, successMsg));
+        // Điều phối validate dựa trên mode
+        MessageResponse validateRes;
+        if (AppConstants.MODE_SUBMIT.equals(mode)) {
+            validateRes = employeeValidator.validateForSubmit(employeeRequest);
+        } else {
+            validateRes = employeeValidator.validateForConfirm(employeeRequest);
+        }
+
+        if (validateRes != null) {
+            throw new ValidationException(validateRes);
+        }
+
+        EmployeeResponse employeeResponse = EmployeeResponse.builder()
+                .code(String.valueOf(HttpStatus.OK.value()))
+                .build();
+        return ResponseEntity.ok(employeeResponse);
+    }
+
+    /**
+     * API Lấy thông tin chi tiết của một nhân viên dựa trên ID.
+     * 
+     * @param employeeId ID của nhân viên cần lấy thông tin
+     * @return ResponseEntity chứa EmployeeResponse bao gồm thông tin cá nhân và chứng chỉ
+     */
+    @GetMapping("/{employeeId}")
+    public ResponseEntity<EmployeeResponse> getEmployeeDetailById(@PathVariable Long employeeId) {
+        EmployeeResponse employeeResponse = employeeService.getEmployeeDetailById(employeeId);
+        return ResponseEntity.ok(employeeResponse);
+    }
+
+    /**
+     * API Xóa một nhân viên khỏi hệ thống.
+     * 
+     * @param employeeId ID của nhân viên cần xóa
+     * @return ResponseEntity chứa EmployeeResponse với thông báo xóa thành công
+     * @throws ResourceNotFoundException Nếu nhân viên không tồn tại
+     */
+    @DeleteMapping("/{employeeId}")
+    public ResponseEntity<EmployeeResponse> deleteEmployee(@PathVariable Long employeeId) {
+        employeeService.deleteEmployee(employeeId);
+        
+        EmployeeResponse employeeResponse = EmployeeResponse.builder()
+                .code(String.valueOf(HttpStatus.OK.value()))
+                .message(MessageResponse.builder()
+                        .code(MessageCode.MSG_CODE_MSG003)
+                        .params(new ArrayList<>())
+                        .build())
+                .build();
+        return ResponseEntity.ok(employeeResponse);
+    }
+
+    /**
+     * API Cập nhật thông tin cho nhân viên đã tồn tại.
+     * 
+     * @param employeeRequest Dữ liệu cập nhật nhân viên
+     * @return ResponseEntity chứa EmployeeResponse với thông báo cập nhật thành công
+     * @throws ValidationException Nếu dữ liệu cập nhật không hợp lệ
+     * @throws ResourceNotFoundException Nếu nhân viên không tồn tại
+     */
+    @PutMapping
+    public ResponseEntity<EmployeeResponse> updateEmployee(
+            @RequestBody EmployeeRequest employeeRequest,
+            @RequestParam(value = AppConstants.MODE, defaultValue = AppConstants.MODE_CONFIRM) String mode) {
+
+        // Điều phối validate dựa trên mode
+        MessageResponse validateRes;
+        if (AppConstants.MODE_SUBMIT.equals(mode)) {
+            validateRes = employeeValidator.validateForSubmit(employeeRequest);
+        } else {
+            validateRes = employeeValidator.validateForConfirm(employeeRequest);
+        }
+
+        if (validateRes != null) {
+            throw new ValidationException(validateRes);
+        }
+
+        employeeService.updateEmployee(employeeRequest);
+
+        EmployeeResponse employeeResponse = EmployeeResponse.builder()
+                .code(String.valueOf(HttpStatus.OK.value()))
+                .employeeId(employeeRequest.getEmployeeId())
+                .message(MessageResponse.builder()
+                        .code(MessageCode.MSG_CODE_MSG002)
+                        .params(new ArrayList<>())
+                        .build())
+                .build();
+        return ResponseEntity.ok(employeeResponse);
     }
 }

@@ -1,65 +1,51 @@
 /**
  * Copyright(C) 2026 Luvina
- * [GlobalExceptionHandler.java], 24/04/2026 tranledat
+ * [GlobalExceptionHandler.java], 03/05/2026 tranledat
  */
 package com.luvina.la.exception;
 
+import com.luvina.la.constant.MessageCode;
+import com.luvina.la.payload.response.EmployeeResponse;
 import com.luvina.la.payload.response.MessageResponse;
-import com.luvina.la.payload.response.ErrorResponse;
-import com.luvina.la.config.Constants;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.ArrayList;
 
 /**
- * Lớp xử lý lỗi tập trung cho toàn bộ ứng dụng.
- * 
- * @author tranledat
+ * Xử lý các ngoại lệ toàn cục cho ứng dụng.
  */
 @RestControllerAdvice
-@RequiredArgsConstructor
-@Slf4j
 public class GlobalExceptionHandler {
 
-    private final MessageSource messageSource;
-    private final Locale defaultLocale = Locale.JAPANESE;
-
     /**
-     * Bắt và xử lý các lỗi nghiệp vụ chủ động throw từ Service.
+     * Xử lý các ngoại lệ được kế thừa từ BaseException.
      */
-    @ExceptionHandler(CustomException.class)
-    public ResponseEntity<List<MessageResponse>> handleCustomException(CustomException ex) {
-        log.error("Business Error: Code={}, Field={}", ex.getCode(), ex.getField());
-        
-        String message = messageSource.getMessage(ex.getCode(), 
-                ex.getParams() != null ? ex.getParams().toArray() : null, 
-                "System Error", 
-                defaultLocale);
-
-        MessageResponse response = MessageResponse.builder().code(ex.getCode()).message(message).field(ex.getField()).build();
-        return new ResponseEntity<>(Collections.singletonList(response), HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<EmployeeResponse> handleBaseException(BaseException e) {
+        EmployeeResponse response = EmployeeResponse.builder()
+                .code(String.valueOf(e.getHttpStatus().value()))
+                .message(e.getMessageResponse())
+                .build();
+        return ResponseEntity.status(e.getHttpStatus()).body(response);
     }
 
     /**
-     * Bắt các lỗi không xác định (Internal Server Error).
+     * Xử lý các ngoại lệ không xác định khác.
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex) {
-        log.error("Unexpected Error: ", ex);
+    public ResponseEntity<EmployeeResponse> handleUncaughtException(Exception e) {
+        e.printStackTrace(); // Log lỗi cho mục đích debug
         
-        ErrorResponse response = ErrorResponse.builder()
-                .code(Constants.CODE_ERROR_SYSTEM)
-                .message("システムエラーが発生しました。") // Thông báo lỗi hệ thống đơn giản
+        EmployeeResponse response = EmployeeResponse.builder()
+                .code(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()))
+                .message(MessageResponse.builder()
+                        .code(MessageCode.MSG_CODE_ER015)
+                        .params(new ArrayList<>())
+                        .build())
                 .build();
-        
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

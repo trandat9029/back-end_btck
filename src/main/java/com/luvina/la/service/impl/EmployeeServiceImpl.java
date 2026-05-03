@@ -1,41 +1,49 @@
 /**
- * Copyright(C) 2026 - Luvina
- * [EmployeeServiceImpl.java], 24/04/2026 tranledat
+ * Copyright(C) 2026 Luvina
+ * [EmployeeServiceImpl.java], 13/04/2026 tranledat
  */
 package com.luvina.la.service.impl;
 
+import com.luvina.la.common.utils.CommonUtils;
+import com.luvina.la.common.validate.ValidatorUtils;
+import com.luvina.la.constant.AppConstants;
+import com.luvina.la.constant.MessageCode;
+import com.luvina.la.dto.CertificationDTO;
 import com.luvina.la.dto.EmployeeDTO;
-import com.luvina.la.exception.CustomException;
-import com.luvina.la.payload.request.EmployeeRequest;
-import com.luvina.la.payload.response.EmployeeDetailResponse;
-import com.luvina.la.payload.response.EmployeeDetailResponse.EmployeeCertificationDetailResponse;
-import com.luvina.la.payload.response.MessageResponse;
-import com.luvina.la.entity.Certification;
-import com.luvina.la.entity.Department;
 import com.luvina.la.entity.Employee;
 import com.luvina.la.entity.EmployeeCertification;
+import com.luvina.la.exception.ResourceNotFoundException;
+import com.luvina.la.mapper.EmployeeMapper;
+import com.luvina.la.payload.request.CertificationRequest;
+import com.luvina.la.payload.request.EmployeeRequest;
+import com.luvina.la.payload.response.EmployeeResponse;
 import com.luvina.la.repository.CertificationRepository;
 import com.luvina.la.repository.DepartmentRepository;
 import com.luvina.la.repository.EmployeeCertificationRepository;
 import com.luvina.la.repository.EmployeeRepository;
 import com.luvina.la.service.EmployeeService;
-import com.luvina.la.validation.EmployeeValidate;
-import com.luvina.la.config.Constants;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.sql.Date;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
- * Lớp triển khai các phương thức xử lý nghiệp vụ liên quan đến nhân viên.
- * Thực hiện các thao tác với Database thông qua các Repository.
- *
+ * Lớp triển khai các nghiệp vụ liên quan đến nhân viên.
+ * 
  * @author tranledat
  */
 @Service
@@ -46,87 +54,232 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final DepartmentRepository departmentRepository;
     private final CertificationRepository certificationRepository;
     private final EmployeeCertificationRepository employeeCertificationRepository;
-    private final EmployeeValidate employeeValidate;
+    private final PasswordEncoder passwordEncoder;
 
     /**
-     * Lấy danh sách nhân viên cho ADM002 theo điều kiện tìm kiếm, sắp xếp và phân trang.
-     * @param employeeName Tên nhân viên dùng để tìm kiếm.
-     * @param departmentId Mã phòng ban dùng để lọc.
-     * @param sortEmployeeName Thứ tự sắp xếp theo tên nhân viên.
-     * @param sortCertificationName Thứ tự sắp xếp theo tên chứng chỉ.
-     * @param sortEndDate Thứ tự sắp xếp theo ngày hết hạn chứng chỉ.
-     * @param limit Số lượng bản ghi trên một trang.
-     * @param offset Vị trí bắt đầu bản ghi.
-     * @return Danh sách nhân viên.
+     * Lấy tổng số bản ghi nhân viên dựa trên điều kiện tìm kiếm.
+     * 
+     * @param employeeName Tên nhân viên (hỗ trợ tìm kiếm partial)
+     * @param departmentId ID phòng ban
+     * @return Tổng số lượng nhân viên thỏa mãn điều kiện
      */
     @Override
-    public List<EmployeeDTO> getListEmployee(
-            String employeeName,
-            Long departmentId,
-            String sortEmployeeName,
-            String sortCertificationName,
-            String sortEndDate,
-            Integer limit,
-            Integer offset) {
-        String escapedEmployeeName = escapeLikePattern(employeeName);
-        List<Object[]> rows = employeeRepository.getListEmployee(
-                escapedEmployeeName,
-                departmentId,
-                sortEmployeeName,
-                sortCertificationName,
-                sortEndDate,
-                limit,
-                offset);
+    public Long getTotalRecords(String employeeName, Long departmentId) {
+        String escapedName = CommonUtils.escapeLike(employeeName);
+        Pageable pageable = PageRequest.of(0, 1);
+        Page<Map<String, Object>> page = employeeRepository.searchEmployees(escapedName, departmentId, pageable);
+        return page.getTotalElements();
+    }
 
-        return rows.stream()
-                .map(row -> new EmployeeDTO(
-                        ((Number) row[0]).longValue(),
-                        (String) row[1],
-                        convertSqlDateToLocalDate(row[2]),
-                        row[3] != null ? ((Number) row[3]).longValue() : null,
-                        (String) row[4],
-                        (String) row[5],
-                        (String) row[6],
-                        (String) row[7],
-                        (String) row[8],
-                        (String) row[9],
-                        convertSqlDateToLocalDate(row[10]),
-                        row[11] != null ? ((Number) row[11]).doubleValue() : null
-                ))
+    /**
+     * Lấy danh sách nhân viên có phân trang, tìm kiếm và sắp xếp.
+     * 
+     * @param employeeName Tên nhân viên cần tìm
+     * @param departmentId ID phòng ban
+     * @param ordEmployeeName Hướng sắp xếp theo tên nhân viên (ASC/DESC)
+     * @param ordCertificationName Hướng sắp xếp theo tên chứng chỉ
+     * @param ordEndDate Hướng sắp xếp theo ngày kết thúc chứng chỉ
+     * @param offset Vị trí bắt đầu lấy dữ liệu
+     * @param limit Số lượng bản ghi tối đa trên một trang
+     * @return Danh sách EmployeeDTO chứa thông tin nhân viên
+     */
+    @Override
+    public List<EmployeeDTO> getEmployees(String employeeName, Long departmentId, String ordEmployeeName,
+            String ordCertificationName, String ordEndDate, Integer offset, Integer limit) {
+
+        int pageSize = (limit != null && limit > 0) ? limit : AppConstants.DEFAULT_PAGE_SIZE;
+        int pageOffset = (offset != null) ? offset : 0;
+        int pageNumber = pageOffset / pageSize;
+
+        String escapedName = CommonUtils.escapeLike(employeeName);
+
+        Sort.Direction dirName = CommonUtils.getDirection(ordEmployeeName);
+        Sort.Direction dirCert = CommonUtils.getDirection(ordCertificationName);
+        Sort.Direction dirEnd = CommonUtils.getDirection(ordEndDate);
+
+        if (ordCertificationName != null && !ordCertificationName.isEmpty()) {
+            dirCert = ordCertificationName.equalsIgnoreCase("ASC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        }
+
+        Sort sort = JpaSort.unsafe(dirName, "employee_name")
+                .and(JpaSort.unsafe(dirCert, "COALESCE(c.certification_level, 6)"))
+                .and(JpaSort.unsafe(dirEnd, "ec.end_date"));
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        return employeeRepository.searchEmployees(escapedName, departmentId, pageable).getContent()
+                .stream()
+                .map(EmployeeMapper.MAPPER::toDtoFromMap)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Đếm tổng số lượng nhân viên thỏa mãn điều kiện lọc.
-     * @param employeeName Tên nhân viên dùng để tìm kiếm.
-     * @param departmentId Mã phòng ban dùng để lọc.
-     * @return Tổng số lượng nhân viên.
+     * Thêm mới một nhân viên vào hệ thống.
+     * 
+     * @param employeeRequest Dữ liệu nhân viên cần thêm
      */
     @Override
-    public Long countEmployeesWithFilter(String employeeName, Long departmentId) {
-        return employeeRepository.countEmployeesWithFilter(
-                escapeLikePattern(employeeName),
-                departmentId
-        );
+    @Transactional(rollbackFor = Exception.class)
+    public void addEmployee(EmployeeRequest employeeRequest) {
+        try {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DATE_FORMAT);
+
+            Employee employee = new Employee();
+            employee.setEmployeeLoginId(employeeRequest.getEmployeeLoginId());
+            employee.setEmployeeName(employeeRequest.getEmployeeName());
+            employee.setEmployeeNameKana(employeeRequest.getEmployeeNameKana());
+            employee.setEmployeeBirthDate(simpleDateFormat.parse(employeeRequest.getEmployeeBirthDate()));
+            employee.setEmployeeEmail(employeeRequest.getEmployeeEmail());
+            employee.setEmployeeTelephone(employeeRequest.getEmployeeTelephone());
+            employee.setDepartmentId(Long.parseLong(employeeRequest.getDepartmentId()));
+            employee.setEmployeeLoginPassword(passwordEncoder.encode(employeeRequest.getEmployeeLoginPassword()));
+            employee.setRole(1);
+
+            employee = employeeRepository.save(employee);
+
+            CertificationRequest certificationRequest = employeeRequest.getCertificationRequest();
+            if (certificationRequest != null && !ValidatorUtils.isEmpty(certificationRequest.getCertificationId())) {
+                EmployeeCertification employeeCertification = new EmployeeCertification();
+                employeeCertification.setEmployeeId(employee.getEmployeeId());
+                employeeCertification.setCertificationId(Long.parseLong(certificationRequest.getCertificationId()));
+                employeeCertification.setStartDate(simpleDateFormat.parse(certificationRequest.getCertificationStartDate()));
+                employeeCertification.setEndDate(simpleDateFormat.parse(certificationRequest.getCertificationEndDate()));
+                employeeCertification.setScore(new BigDecimal(certificationRequest.getEmployeeCertificationScore()));
+
+                employeeCertificationRepository.save(employeeCertification);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    /**
+     * Lấy chi tiết thông tin một nhân viên theo ID.
+     * 
+     * @param employeeId ID nhân viên
+     * @return EmployeeResponse chứa thông tin chi tiết
+     * @throws ResourceNotFoundException Nếu không tìm thấy nhân viên
+     */
+    @Override
+    public EmployeeResponse getEmployeeDetailById(Long employeeId) {
+        try {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DATE_FORMAT);
+
+            List<Map<String, Object>> detailRows = employeeRepository.findDetailById(employeeId);
+
+            if (detailRows == null || detailRows.isEmpty()) {
+                throw new ResourceNotFoundException(MessageCode.MSG_CODE_ER013);
+            }
+
+            Map<String, Object> firstRow = detailRows.get(0);
+            EmployeeResponse employeeResponse = new EmployeeResponse();
+            employeeResponse.setEmployeeId(((Number) firstRow.get("employeeId")).longValue());
+            employeeResponse.setEmployeeLoginId((String) firstRow.get("employeeLoginId"));
+            employeeResponse.setEmployeeName((String) firstRow.get("employeeName"));
+            employeeResponse.setEmployeeNameKana((String) firstRow.get("employeeNameKana"));
+            employeeResponse.setEmployeeBirthDate(simpleDateFormat.format((Date) firstRow.get("employeeBirthDate")));
+            employeeResponse.setEmployeeEmail((String) firstRow.get("employeeEmail"));
+            employeeResponse.setEmployeeTelephone((String) firstRow.get("employeeTelephone"));
+            employeeResponse.setDepartmentId(firstRow.get("departmentId").toString());
+            employeeResponse.setDepartmentName((String) firstRow.get("departmentName"));
+
+            List<CertificationDTO> certs = new ArrayList<>();
+            for (Map<String, Object> row : detailRows) {
+                if (row.get("certificationId") != null) {
+                    CertificationDTO certificationDTO = new CertificationDTO();
+                    certificationDTO.setCertificationId(((Number) row.get("certificationId")).longValue());
+                    certificationDTO.setCertificationName((String) row.get("certificationName"));
+                    certificationDTO.setStartDate(simpleDateFormat.format((Date) row.get("startDate")));
+                    certificationDTO.setEndDate(simpleDateFormat.format((Date) row.get("endDate")));
+                    certificationDTO.setScore((BigDecimal) row.get("score"));
+                    certs.add(certificationDTO);
+                }
+            }
+
+            employeeResponse.setCertifications(certs);
+            employeeResponse.setCode(String.valueOf(HttpStatus.OK.value()));
+
+            return employeeResponse;
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     * Kiểm tra xem Login ID đã tồn tại trong hệ thống chưa (trừ nhân viên hiện tại nếu đang update).
-     * @param loginId Tên đăng nhập cần kiểm tra.
-     * @param employeeId ID nhân viên hiện tại (null nếu là thêm mới).
-     * @return true nếu đã tồn tại, false nếu chưa.
+     * Xóa nhân viên khỏi hệ thống.
+     * Đồng thời xóa tất cả các chứng chỉ liên quan của nhân viên đó.
+     * 
+     * @param employeeId ID của nhân viên cần xóa
+     * @throws ResourceNotFoundException Nếu không tìm thấy nhân viên cần xóa
      */
     @Override
-    public boolean checkExistsEmployeeByLoginId(String loginId, Long employeeId) {
-        return employeeRepository.findByEmployeeLoginId(loginId)
-                .map(employee -> !employee.getEmployeeId().equals(employeeId))
-                .orElse(false);
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteEmployee(Long employeeId) {
+        if (!employeeRepository.existsById(employeeId)) {
+            throw new ResourceNotFoundException(MessageCode.MSG_CODE_ER014);
+        }
+        employeeCertificationRepository.deleteAllByEmployeeId(employeeId);
+        employeeRepository.deleteById(employeeId);
     }
 
     /**
-     * Kiểm tra xem ID nhân viên có tồn tại trong hệ thống hay không.
-     * @param employeeId ID nhân viên cần kiểm tra.
-     * @return true nếu tồn tại, false nếu không.
+     * Cập nhật thông tin của nhân viên hiện có.
+     * Quy trình: Cập nhật thông tin cơ bản -> Xóa chứng chỉ cũ -> Thêm chứng chỉ mới.
+     * 
+     * @param employeeRequest Đối tượng chứa dữ liệu cập nhật
+     * @throws ResourceNotFoundException Nếu không tìm thấy nhân viên cần cập nhật
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateEmployee(EmployeeRequest employeeRequest) {
+        try {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DATE_FORMAT);
+
+            Employee employee = employeeRepository.findById(employeeRequest.getEmployeeId())
+                    .orElseThrow(() -> new ResourceNotFoundException(MessageCode.MSG_CODE_ER013));
+
+            employee.setEmployeeName(employeeRequest.getEmployeeName());
+            employee.setEmployeeNameKana(employeeRequest.getEmployeeNameKana());
+            employee.setEmployeeBirthDate(simpleDateFormat.parse(employeeRequest.getEmployeeBirthDate()));
+            employee.setEmployeeEmail(employeeRequest.getEmployeeEmail());
+            employee.setEmployeeTelephone(employeeRequest.getEmployeeTelephone());
+            employee.setDepartmentId(Long.parseLong(employeeRequest.getDepartmentId()));
+
+            String password = employeeRequest.getEmployeeLoginPassword();
+            if (!ValidatorUtils.isEmpty(password)) {
+                employee.setEmployeeLoginPassword(passwordEncoder.encode(password));
+            }
+
+            employeeRepository.save(employee);
+
+            employeeCertificationRepository.deleteAllByEmployeeId(employee.getEmployeeId());
+
+            CertificationRequest certificationRequest = employeeRequest.getCertificationRequest();
+            if (certificationRequest != null && !ValidatorUtils.isEmpty(certificationRequest.getCertificationId())) {
+                EmployeeCertification employeeCertification = new EmployeeCertification();
+                employeeCertification.setEmployeeId(employee.getEmployeeId());
+                employeeCertification.setCertificationId(Long.parseLong(certificationRequest.getCertificationId()));
+                employeeCertification.setStartDate(simpleDateFormat.parse(certificationRequest.getCertificationStartDate()));
+                employeeCertification.setEndDate(simpleDateFormat.parse(certificationRequest.getCertificationEndDate()));
+                employeeCertification.setScore(new BigDecimal(certificationRequest.getEmployeeCertificationScore()));
+
+                employeeCertificationRepository.save(employeeCertification);
+            }
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Kiểm tra sự tồn tại của nhân viên theo ID.
+     * 
+     * @param employeeId ID cần kiểm tra
+     * @return true nếu tồn tại, ngược lại false
      */
     @Override
     public boolean checkExistsEmployeeById(Long employeeId) {
@@ -134,207 +287,18 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     /**
-     * Escape ký tự đặc biệt cho mệnh đề LIKE trong SQL.
-     * @param value Chuỗi tìm kiếm đầu vào.
-     * @return Chuỗi đã được escape cho mệnh đề LIKE.
-     */
-    private String escapeLikePattern(String value) {
-        if (value == null) {
-            return null;
-        }
-
-        return value
-                .replace("\\", "\\\\")
-                .replace("%", "\\%")
-                .replace("_", "\\_");
-    }
-
-    /**
-     * Chuyển giá trị ngày trả về từ native query sang LocalDate.
-     * @param obj Object có thể là java.sql.Date hoặc LocalDate.
-     * @return LocalDate sau khi chuyển đổi.
-     */
-    private LocalDate convertSqlDateToLocalDate(Object obj) {
-        if (obj == null) return null;
-        if (obj instanceof Date) {
-            return ((Date) obj).toLocalDate();
-        }
-        if (obj instanceof LocalDate) {
-            return (LocalDate) obj;
-        }
-        return null;
-    }
-
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-
-    /**
-     * Thực hiện thêm mới nhân viên vào cơ sở dữ liệu.
-     * @param request Đối tượng EmployeeRequest chứa thông tin nhân viên từ form nhập liệu.
-     * @return ID của nhân viên vừa được thêm mới.
+     * Kiểm tra sự tồn tại của Login ID để tránh trùng lặp.
+     * 
+     * @param loginId Login ID cần kiểm tra
+     * @param employeeId ID của nhân viên hiện tại (để loại trừ khi update)
+     * @return true nếu Login ID đã bị chiếm dụng, ngược lại false
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Long addEmployee(EmployeeRequest request) {
-        // 1. Thực hiện validate dữ liệu
-        validateRequest(request);
-
-        // 2. Khởi tạo Entity mới
-        Employee employee = new Employee();
-        employee.setEmployeeLoginId(request.getEmployeeLoginId());
-
-        // 3. Map dữ liệu từ request sang entity và lưu
-        mapRequestToEntity(request, employee);
-        Employee persistedEmployee = employeeRepository.save(employee);
-
-        // 4. Lưu chứng chỉ
-        if (request.getCertificationId() != null) {
-            Certification certification = certificationRepository.findById(request.getCertificationId())
-                    .orElseThrow(() -> new CustomException(Constants.CODE_ER004, "certificationId"));
-
-            EmployeeCertification employeeCertification = new EmployeeCertification();
-            employeeCertification.setEmployee(persistedEmployee);
-            employeeCertification.setCertification(certification);
-            employeeCertification.setStartDate(LocalDate.parse(request.getCertificationStartDate(), dateFormatter));
-            employeeCertification.setEndDate(LocalDate.parse(request.getCertificationEndDate(), dateFormatter));
-            employeeCertification.setScore(new BigDecimal(request.getEmployeeCertificationScore()));
-
-            employeeCertificationRepository.save(employeeCertification);
+    public boolean checkExistsEmployeeByLoginId(String loginId, Long employeeId) {
+        Optional<Employee> existing = employeeRepository.findByEmployeeLoginId(loginId);
+        if (existing.isPresent()) {
+            return employeeId == null || !existing.get().getEmployeeId().equals(employeeId);
         }
-        
-        return persistedEmployee.getEmployeeId();
-    }
-
-    /**
-     * Thực hiện cập nhật thông tin nhân viên vào cơ sở dữ liệu.
-     * @param request Đối tượng EmployeeRequest chứa thông tin nhân viên cần cập nhật.
-     * @return ID của nhân viên vừa được cập nhật.
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Long updateEmployee(EmployeeRequest request) {
-        // 1. Thực hiện validate dữ liệu
-        validateRequest(request);
-
-        // 2. Tìm nhân viên hiện tại
-        Employee employee = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(() -> new CustomException(Constants.CODE_ER013, "ID"));
-
-        // 3. Map dữ liệu từ request sang entity và lưu
-        mapRequestToEntity(request, employee);
-        Employee persistedEmployee = employeeRepository.save(employee);
-
-        // 4. Xử lý chứng chỉ: Xóa cũ và thêm mới
-        employeeCertificationRepository.deleteByEmployeeEmployeeId(request.getEmployeeId());
-        if (request.getCertificationId() != null) {
-            Certification certification = certificationRepository.findById(request.getCertificationId())
-                    .orElseThrow(() -> new CustomException(Constants.CODE_ER004, "certificationId"));
-
-            EmployeeCertification employeeCertification = new EmployeeCertification();
-            employeeCertification.setEmployee(persistedEmployee);
-            employeeCertification.setCertification(certification);
-            employeeCertification.setStartDate(LocalDate.parse(request.getCertificationStartDate(), dateFormatter));
-            employeeCertification.setEndDate(LocalDate.parse(request.getCertificationEndDate(), dateFormatter));
-            employeeCertification.setScore(new BigDecimal(request.getEmployeeCertificationScore()));
-
-            employeeCertificationRepository.save(employeeCertification);
-        }
-        
-        return persistedEmployee.getEmployeeId();
-    }
-
-    /**
-     * Thực hiện validate request và ném CustomException nếu có lỗi.
-     * @param request Request cần validate.
-     */
-    private void validateRequest(EmployeeRequest request) {
-        List<MessageResponse> errors = employeeValidate.validate(request);
-        if (!errors.isEmpty()) {
-            throw new CustomException(errors.get(0).getCode());
-        }
-    }
-
-    /**
-     * Map dữ liệu từ EmployeeRequest sang Entity Employee.
-     * @param request Dữ liệu từ form.
-     * @param employee Entity nhân viên cần gán giá trị.
-     */
-    private void mapRequestToEntity(EmployeeRequest request, Employee employee) {
-        employee.setEmployeeName(request.getEmployeeName());
-        employee.setEmployeeNameKana(request.getEmployeeNameKana());
-        employee.setEmployeeBirthDate(LocalDate.parse(request.getEmployeeBirthDate(), dateFormatter));
-        employee.setEmployeeEmail(request.getEmployeeEmail());
-        employee.setEmployeeTelephone(request.getEmployeeTelephone());
-        
-        // Chỉ thiết lập mật khẩu và Login ID nếu là thêm mới nhân viên (ID chưa tồn tại)
-        if (employee.getEmployeeId() == null) {
-            employee.setEmployeeLoginId(request.getEmployeeLoginId());
-            employee.setEmployeeLoginPassword(request.getEmployeeLoginPassword());
-        }
-
-        Department department = departmentRepository.findById(request.getDepartmentId())
-                .orElseThrow(() -> new CustomException(Constants.CODE_ER004, "departmentId"));
-        employee.setDepartment(department);
-    }
-
-    /**
-     * Thực hiện xóa thông tin nhân viên khỏi cơ sở dữ liệu dựa trên ID.
-     * Trước khi xóa nhân viên, sẽ thực hiện xóa các bản ghi liên quan trong bảng chứng chỉ.
-     * @param employeeId Mã ID của nhân viên cần thực hiện xóa.
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void deleteEmployee(Long employeeId) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new CustomException(Constants.CODE_ER013, "ID"));
-
-        employeeCertificationRepository.deleteByEmployeeEmployeeId(employeeId);
-        employeeRepository.delete(employee);
-    }
-
-
-    /**
-     * Lấy thông tin chi tiết của một nhân viên dựa trên mã ID nhân viên.
-     * @param employeeId Mã ID của nhân viên cần lấy thông tin chi tiết.
-     * @return EmployeeDetailResponse Đối tượng chứa toàn bộ thông tin chi tiết và danh sách chứng chỉ của nhân viên.
-     */
-    @Override
-    public EmployeeDetailResponse getEmployeeById(Long employeeId) {
-        // 1. Tìm nhân viên theo ID
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new CustomException(Constants.CODE_ER013, "ID"));
-
-        // 2. Khởi tạo đối tượng Response
-        EmployeeDetailResponse employeeDetailResponse = new EmployeeDetailResponse();
-        employeeDetailResponse.setCode("200");
-        employeeDetailResponse.setEmployeeId(employee.getEmployeeId());
-        employeeDetailResponse.setEmployeeName(employee.getEmployeeName());
-        employeeDetailResponse.setEmployeeNameKana(employee.getEmployeeNameKana());
-        employeeDetailResponse.setEmployeeBirthDate(employee.getEmployeeBirthDate().format(dateFormatter));
-        employeeDetailResponse.setEmployeeEmail(employee.getEmployeeEmail());
-        employeeDetailResponse.setEmployeeTelephone(employee.getEmployeeTelephone());
-        employeeDetailResponse.setEmployeeLoginId(employee.getEmployeeLoginId());
-
-        // Set Department info
-        if (employee.getDepartment() != null) {
-            employeeDetailResponse.setDepartmentId(employee.getDepartment().getDepartmentId());
-            employeeDetailResponse.setDepartmentName(employee.getDepartment().getDepartmentName());
-        }
-
-        // 3. Lấy danh sách chứng chỉ của nhân viên
-        List<EmployeeCertification> certs = employeeCertificationRepository.findCertsByEmployeeId(employeeId);
-        
-        List<EmployeeCertificationDetailResponse> certDetails = certs.stream().map(c -> {
-            EmployeeCertificationDetailResponse certDetail = new EmployeeCertificationDetailResponse();
-            certDetail.setCertificationId(c.getCertification().getCertificationId());
-            certDetail.setCertificationName(c.getCertification().getCertificationName());
-            certDetail.setStartDate(c.getStartDate().format(dateFormatter));
-            certDetail.setEndDate(c.getEndDate().format(dateFormatter));
-            certDetail.setScore(c.getScore().intValue()); // Score trong Entity là BigDecimal, Response cần Integer
-            return certDetail;
-        }).collect(Collectors.toList());
-
-        employeeDetailResponse.setCertifications(certDetails);
-
-        return employeeDetailResponse;
+        return false;
     }
 }

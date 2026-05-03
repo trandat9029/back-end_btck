@@ -4,37 +4,23 @@
  */
 package com.luvina.la.payload.request;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
 
 /**
- * Class chứa thông tin nhân viên nhận từ request của màn hình ADM004.
- * Dùng cho cả luồng validate và lưu dữ liệu.
+ * Class chứa thông tin nhân viên nhận từ request của màn hình ADM004/ADM005.
  *
  * @author tranledat
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class EmployeeRequest implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
+public class EmployeeRequest {
     private Long employeeId;
     private String employeeLoginId;
-    private Long departmentId;
     private String employeeName;
     private String employeeNameKana;
     private String employeeBirthDate;
     private String employeeEmail;
     private String employeeTelephone;
     private String employeeLoginPassword;
-    private String employeeLoginPasswordConfirm;
-    private Long certificationId;
-    private String certificationStartDate;
-    private String certificationEndDate;
-    private String employeeCertificationScore;
+    private String departmentId;
+    private CertificationRequest certificationRequest;
 }

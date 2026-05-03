@@ -5,21 +5,21 @@
 package com.luvina.la.repository;
 
 import com.luvina.la.entity.Certification;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 /**
- * Repository truy vấn dữ liệu chứng chỉ.
+ * Interface Repository cung cấp các phương thức truy cập dữ liệu bảng certifications.
+ * 
  * @author tranledat
  */
 @Repository
 public interface CertificationRepository extends JpaRepository<Certification, Long> {
-
     /**
-     * Lấy danh sách tất cả chứng chỉ, sắp xếp theo ID giảm dần.
-     * @return Danh sách các chứng chỉ.
+     * Lấy danh sách tất cả chứng chỉ, sắp xếp theo level tăng dần.
+     * 
+     * @return Danh sách các chứng chỉ
      */
-    List<Certification> findAllByOrderByCertificationIdDesc();
+    List<Certification> findAllByOrderByCertificationLevelAsc();
 }

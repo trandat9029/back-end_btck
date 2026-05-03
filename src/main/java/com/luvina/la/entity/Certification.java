@@ -11,13 +11,11 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.io.Serializable;
-import java.util.List;
 
 /**
- * Entity dai dien cho bang certifications luu thong tin chung chi.
+ * Entity đại diện cho bảng certifications lưu thông tin chứng chỉ.
  *
  * @author tranledat
  */
@@ -38,7 +36,4 @@ public class Certification implements Serializable {
 
     @Column(name = "certification_level", nullable = false)
     private Integer certificationLevel;
-
-    @OneToMany(mappedBy = "certification")
-    private List<EmployeeCertification> employees;
 }

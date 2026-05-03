@@ -11,13 +11,11 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.io.Serializable;
-import java.util.List;
 
 /**
- * Entity dai dien cho bang departments luu thong tin phong ban.
+ * Entity đại diện cho bảng departments lưu thông tin phòng ban.
  *
  * @author tranledat
  */
@@ -35,7 +33,4 @@ public class Department implements Serializable {
 
     @Column(name = "department_name", nullable = false)
     private String departmentName;
-
-    @OneToMany(mappedBy = "department")
-    private List<Employee> employees;
 }

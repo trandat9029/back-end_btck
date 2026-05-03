@@ -11,15 +11,13 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.Date;
 
 /**
- * Entity dai dien cho bang employees_certifications luu quan he nhan vien va chung chi.
+ * Entity đại diện cho bảng employees_certifications lưu quan hệ nhân viên và chứng chỉ.
  *
  * @author tranledat
  */
@@ -35,19 +33,17 @@ public class EmployeeCertification implements Serializable {
     @Column(name = "employee_certification_id", unique = true, nullable = false)
     private Long employeeCertificationId;
 
-    @ManyToOne
-    @JoinColumn(name = "employee_id", nullable = false)
-    private Employee employee;
+    @Column(name = "employee_id", nullable = false)
+    private Long employeeId;
 
-    @ManyToOne
-    @JoinColumn(name = "certification_id", nullable = false)
-    private Certification certification;
+    @Column(name = "certification_id", nullable = false)
+    private Long certificationId;
 
     @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
+    private Date startDate;
 
     @Column(name = "end_date", nullable = false)
-    private LocalDate endDate;
+    private Date endDate;
 
     @Column(name = "score", nullable = false)
     private BigDecimal score;

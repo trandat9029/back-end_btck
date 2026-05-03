@@ -1,32 +1,31 @@
 /**
  * Copyright(C) 2026 Luvina
- * [DepartmentService.java], 13/04/2026 tranledat
+ * [DepartmentService.java], 09/04/2026 tranledat
  */
 package com.luvina.la.service;
 
 import com.luvina.la.dto.DepartmentDTO;
-
 import java.util.List;
 
 /**
- * Interface cung cấp các phương thức xử lý nghiệp vụ liên quan đến phòng ban.
- *
+ * Interface Service cung cấp các nghiệp vụ liên quan đến phòng ban.
+ * 
  * @author tranledat
  */
 public interface DepartmentService {
 
     /**
-     * Lay danh sach tat ca phong ban.
-     *
-     * @return Danh sach phong ban.
+     * Lấy danh sách tất cả phòng ban.
+     * 
+     * @return Danh sách các DTO phòng ban
      */
-    List<DepartmentDTO> getAllDepartments();
+    List<DepartmentDTO> getDepartments();
 
     /**
-     * Kiểm tra xem phòng ban có tồn tại trong hệ thống không.
-     *
-     * @param departmentId ID phòng ban cần kiểm tra.
-     * @return true nếu tồn tại, false nếu không.
+     * Kiểm tra sự tồn tại của phòng ban dựa trên ID.
+     * 
+     * @param id ID của phòng ban cần kiểm tra
+     * @return true nếu tồn tại, ngược lại false
      */
-    boolean checkExistsDepartmentById(Long departmentId);
+    boolean checkExistsDepartmentById(Long id);
 }
