@@ -80,8 +80,11 @@ public class EmployeeController {
         // 1. Gọi service Thêm mới
         Long newId = employeeService.addEmployee(request);
         
-        // 2. Trả về response theo đúng cấu trúc thiết kế
-        return ResponseEntity.ok(UpdateEmployeeResponse.success(newId, "MSG001"));
+        // 2. Lấy message thành công từ messageSource (MSG001)
+        String message = messageSource.getMessage("MSG001", null, "Registration Successful", defaultLocale);
+        
+        // 3. Trả về response theo đúng cấu trúc thiết kế
+        return ResponseEntity.ok(UpdateEmployeeResponse.success(newId, "MSG001", message));
     }
 
     /**
@@ -98,8 +101,11 @@ public class EmployeeController {
         // 2. Gọi service Cập nhật
         Long updatedId = employeeService.updateEmployee(request);
         
-        // 3. Trả về response theo đúng cấu trúc thiết kế
-        return ResponseEntity.ok(UpdateEmployeeResponse.success(updatedId, "MSG002"));
+        // 3. Lấy message thành công từ messageSource (MSG002)
+        String message = messageSource.getMessage("MSG002", null, "Update Successful", defaultLocale);
+        
+        // 4. Trả về response theo đúng cấu trúc thiết kế
+        return ResponseEntity.ok(UpdateEmployeeResponse.success(updatedId, "MSG002", message));
     }
 
     /**

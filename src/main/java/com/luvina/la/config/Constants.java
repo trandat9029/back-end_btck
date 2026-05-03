@@ -117,7 +117,6 @@ public class Constants {
     public static final String CODE_ER021 = "ER021"; // Lỗi: Tham số sắp xếp không hợp lệ
     public static final String CODE_ER022 = "ER022"; // Lỗi: Không tìm thấy trang (404)
     public static final String CODE_ERROR_SYSTEM = "500"; // Mã lỗi hệ thống mặc định (Internal Server Error)
-    public static final String CODE_ERROR_SYSTEM_OLD = "ER999";
 
     // Các hằng số định nghĩa giới hạn về độ dài dữ liệu (Validation constraints)
     public static final int MAX_LENGTH_LOGIN_ID = 50; // Độ dài tối đa của Tên đăng nhập

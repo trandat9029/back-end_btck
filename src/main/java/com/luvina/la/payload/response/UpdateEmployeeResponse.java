@@ -22,7 +22,9 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UpdateEmployeeResponse {
+public class UpdateEmployeeResponse implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String code;
     private Long employeeId;
@@ -35,8 +37,11 @@ public class UpdateEmployeeResponse {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class MessageDetail {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class MessageDetail implements java.io.Serializable {
+        private static final long serialVersionUID = 1L;
         private String code;
+        private String message; // Trường message chứa nội dung đã dịch
         private List<String> params;
     }
 
@@ -44,13 +49,18 @@ public class UpdateEmployeeResponse {
      * Tạo phản hồi thành công nhanh chóng.
      * @param employeeId ID nhân viên đã cập nhật.
      * @param messageCode Mã thông báo (VD: MSG002).
+     * @param messageText Nội dung thông báo đã được dịch.
      * @return Đối tượng UpdateEmployeeResponse.
      */
-    public static UpdateEmployeeResponse success(Long employeeId, String messageCode) {
+    public static UpdateEmployeeResponse success(Long employeeId, String messageCode, String messageText) {
         return UpdateEmployeeResponse.builder()
                 .code("200")
                 .employeeId(employeeId)
-                .message(new MessageDetail(messageCode, Collections.emptyList()))
+                .message(MessageDetail.builder()
+                        .code(messageCode)
+                        .message(messageText)
+                        .params(Collections.emptyList())
+                        .build())
                 .build();
     }
 }

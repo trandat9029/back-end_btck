@@ -59,5 +59,6 @@ public interface EmployeeCertificationRepository extends CrudRepository<Employee
      * @param employeeId Ma nhan vien.
      */
     @org.springframework.data.jpa.repository.Modifying
-    void deleteByEmployeeEmployeeId(Long employeeId);
+    @Query("DELETE FROM EmployeeCertification ec WHERE ec.employee.employeeId = :employeeId")
+    void deleteByEmployeeEmployeeId(@Param("employeeId") Long employeeId);
 }
