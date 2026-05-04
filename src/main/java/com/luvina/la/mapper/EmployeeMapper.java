@@ -2,28 +2,70 @@ package com.luvina.la.mapper;
 
 import com.luvina.la.dto.EmployeeDTO;
 import com.luvina.la.entity.Employee;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
+import org.springframework.stereotype.Component;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.math.BigDecimal;
 
-@Mapper
-public interface EmployeeMapper {
-    EmployeeMapper MAPPER = Mappers.getMapper( EmployeeMapper.class );
+@Component
+public class EmployeeMapper {
 
-    Employee toEntity(EmployeeDTO dto);
-    EmployeeDTO toDto(Employee entity);
+    public Employee toEntity(EmployeeDTO dto) {
+        if (dto == null) return null;
+        Employee entity = new Employee();
+        entity.setEmployeeId(dto.getEmployeeId());
+        entity.setEmployeeName(dto.getEmployeeName());
+        entity.setEmployeeNameKana(dto.getEmployeeNameKana());
+        entity.setEmployeeBirthDate(dto.getEmployeeBirthDate());
+        entity.setEmployeeEmail(dto.getEmployeeEmail());
+        entity.setEmployeeTelephone(dto.getEmployeeTelephone());
+        return entity;
+    }
+
+    public EmployeeDTO toDto(Employee entity) {
+        if (entity == null) return null;
+        EmployeeDTO dto = new EmployeeDTO();
+        dto.setEmployeeId(entity.getEmployeeId());
+        dto.setEmployeeName(entity.getEmployeeName());
+        dto.setEmployeeNameKana(entity.getEmployeeNameKana());
+        dto.setEmployeeBirthDate(entity.getEmployeeBirthDate());
+        dto.setEmployeeEmail(entity.getEmployeeEmail());
+        dto.setEmployeeTelephone(entity.getEmployeeTelephone());
+        dto.setEmployeeLoginId(entity.getEmployeeLoginId());
+        return dto;
+    }
     
-    @Mapping(target = "employeeId", expression = "java(map.get(\"employeeId\") != null ? ((Number) map.get(\"employeeId\")).longValue() : null)")
-    @Mapping(target = "employeeName", expression = "java(map.get(\"employeeName\") != null ? map.get(\"employeeName\").toString() : null)")
-    @Mapping(target = "employeeBirthDate", expression = "java((java.util.Date) map.get(\"employeeBirthDate\"))")
-    @Mapping(target = "departmentName", expression = "java(map.get(\"departmentName\") != null ? map.get(\"departmentName\").toString() : null)")
-    @Mapping(target = "employeeEmail", expression = "java(map.get(\"employeeEmail\") != null ? map.get(\"employeeEmail\").toString() : null)")
-    @Mapping(target = "employeeTelephone", expression = "java(map.get(\"employeeTelephone\") != null ? map.get(\"employeeTelephone\").toString() : null)")
-    @Mapping(target = "certificationName", expression = "java(map.get(\"certificationName\") != null ? map.get(\"certificationName\").toString() : null)")
-    @Mapping(target = "endDate", expression = "java((java.util.Date) map.get(\"endDate\"))")
-    @Mapping(target = "score", expression = "java((java.math.BigDecimal) map.get(\"score\"))")
-    EmployeeDTO toDtoFromMap(Map<String, Object> map);
+    public EmployeeDTO toDtoFromMap(Map<String, Object> map) {
+        if (map == null) return null;
+        EmployeeDTO dto = new EmployeeDTO();
+        
+        dto.setEmployeeId(map.get("employeeId") != null ? ((Number) map.get("employeeId")).longValue() : null);
+        dto.setEmployeeName(map.get("employeeName") != null ? map.get("employeeName").toString() : null);
+        dto.setEmployeeBirthDate((Date) map.get("employeeBirthDate"));
+        dto.setDepartmentName(map.get("departmentName") != null ? map.get("departmentName").toString() : null);
+        dto.setEmployeeEmail(map.get("employeeEmail") != null ? map.get("employeeEmail").toString() : null);
+        dto.setEmployeeTelephone(map.get("employeeTelephone") != null ? map.get("employeeTelephone").toString() : null);
+        dto.setCertificationName(map.get("certificationName") != null ? map.get("certificationName").toString() : null);
+        dto.setEndDate((Date) map.get("endDate"));
+        
+        Object scoreObj = map.get("score");
+        if (scoreObj instanceof BigDecimal) {
+            dto.setScore((BigDecimal) scoreObj);
+        } else if (scoreObj instanceof Number) {
+            dto.setScore(BigDecimal.valueOf(((Number) scoreObj).doubleValue()));
+        }
 
-    Iterable<EmployeeDTO> toList(Iterable<Employee> list);
+        return dto;
+    }
+
+    public List<EmployeeDTO> toList(Iterable<Employee> list) {
+        if (list == null) return null;
+        List<EmployeeDTO> dtoList = new ArrayList<>();
+        for (Employee employee : list) {
+            dtoList.add(toDto(employee));
+        }
+        return dtoList;
+    }
 }

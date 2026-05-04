@@ -55,6 +55,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final CertificationRepository certificationRepository;
     private final EmployeeCertificationRepository employeeCertificationRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmployeeMapper employeeMapper;
+
 
     /**
      * Lấy tổng số bản ghi nhân viên dựa trên điều kiện tìm kiếm.
@@ -109,7 +111,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return employeeRepository.searchEmployees(escapedName, departmentId, pageable).getContent()
                 .stream()
-                .map(EmployeeMapper.MAPPER::toDtoFromMap)
+                .map(employeeMapper::toDtoFromMap)
                 .collect(Collectors.toList());
     }
 

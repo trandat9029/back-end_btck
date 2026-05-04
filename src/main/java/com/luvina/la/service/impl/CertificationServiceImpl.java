@@ -31,7 +31,6 @@ public class CertificationServiceImpl implements CertificationService {
             CertificationDTO dto = new CertificationDTO();
             dto.setCertificationId(c.getCertificationId());
             dto.setCertificationName(c.getCertificationName());
-            dto.setCertificationLevel(c.getCertificationLevel());
             return dto;
         }).collect(Collectors.toList());
     }
