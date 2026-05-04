@@ -1,4 +1,4 @@
-package com.luvina.la.constant;
+package com.luvina.la.constants;
 
 public class MessageCode {
     public static final String MSG_CODE_ER001 = "ER001";

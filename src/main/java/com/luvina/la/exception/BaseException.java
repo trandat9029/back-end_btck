@@ -8,6 +8,9 @@ import com.luvina.la.payload.response.MessageResponse;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Lớp ngoại lệ cơ sở cho toàn bộ ứng dụng.
  */
@@ -22,11 +25,20 @@ public class BaseException extends RuntimeException {
         this.httpStatus = httpStatus;
     }
 
+    public BaseException(String code, HttpStatus httpStatus) {
+        super(code);
+        this.messageResponse = MessageResponse.builder()
+                .code(code)
+                .params(new ArrayList<>())
+                .build();
+        this.httpStatus = httpStatus;
+    }
+
     public BaseException(String code, String param, HttpStatus httpStatus) {
         super(code);
         this.messageResponse = MessageResponse.builder()
                 .code(code)
-                .params(java.util.List.of(param))
+                .params(List.of(param))
                 .build();
         this.httpStatus = httpStatus;
     }

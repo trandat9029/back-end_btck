@@ -1,6 +1,6 @@
 package com.luvina.la;
 
-import com.luvina.la.config.Constants;
+import com.luvina.la.constants.AppConstants;
 import com.luvina.la.config.DefaultProfileUtil;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -28,8 +28,8 @@ public class MainApplication implements InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(Constants.SPRING_PROFILE_DEVELOPMENT)
-                && activeProfiles.contains(Constants.SPRING_PROFILE_PRODUCTION)) {
+        if (activeProfiles.contains(AppConstants.SPRING_PROFILE_DEVELOPMENT)
+                && activeProfiles.contains(AppConstants.SPRING_PROFILE_PRODUCTION)) {
             log.error("You have misconfigured your application! It should not run "
                     + "with both the 'dev' and 'prod' profiles at the same time.");
         }

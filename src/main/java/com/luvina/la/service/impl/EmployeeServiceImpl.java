@@ -6,13 +6,13 @@ package com.luvina.la.service.impl;
 
 import com.luvina.la.common.utils.CommonUtils;
 import com.luvina.la.common.validate.ValidatorUtils;
-import com.luvina.la.constant.AppConstants;
-import com.luvina.la.constant.MessageCode;
+import com.luvina.la.constants.AppConstants;
+import com.luvina.la.constants.MessageCode;
 import com.luvina.la.dto.CertificationDTO;
 import com.luvina.la.dto.EmployeeDTO;
 import com.luvina.la.entity.Employee;
 import com.luvina.la.entity.EmployeeCertification;
-import com.luvina.la.exception.ResourceNotFoundException;
+import com.luvina.la.exception.BaseException;
 import com.luvina.la.mapper.EmployeeMapper;
 import com.luvina.la.payload.request.CertificationRequest;
 import com.luvina.la.payload.request.EmployeeRequest;
@@ -24,6 +24,7 @@ import com.luvina.la.repository.EmployeeRepository;
 import com.luvina.la.service.EmployeeService;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -123,9 +124,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addEmployee(EmployeeRequest employeeRequest) {
-        try {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DATE_FORMAT);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DATE_FORMAT);
 
+        try {
             Employee employee = new Employee();
             employee.setEmployeeLoginId(employeeRequest.getEmployeeLoginId());
             employee.setEmployeeName(employeeRequest.getEmployeeName());
@@ -150,7 +151,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
                 employeeCertificationRepository.save(employeeCertification);
             }
-        } catch (Exception e) {
+        } catch (ParseException e) {
             throw new RuntimeException(e);
         }
     }
@@ -161,53 +162,47 @@ public class EmployeeServiceImpl implements EmployeeService {
      * 
      * @param employeeId ID nhân viên
      * @return EmployeeResponse chứa thông tin chi tiết
-     * @throws ResourceNotFoundException Nếu không tìm thấy nhân viên
+     * @throws BaseException Nếu không tìm thấy nhân viên
      */
     @Override
     public EmployeeResponse getEmployeeDetailById(Long employeeId) {
-        try {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DATE_FORMAT);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DATE_FORMAT);
 
-            List<Map<String, Object>> detailRows = employeeRepository.findDetailById(employeeId);
+        List<Map<String, Object>> detailRows = employeeRepository.findDetailById(employeeId);
 
-            if (detailRows == null || detailRows.isEmpty()) {
-                throw new ResourceNotFoundException(MessageCode.MSG_CODE_ER013);
-            }
-
-            Map<String, Object> firstRow = detailRows.get(0);
-            EmployeeResponse employeeResponse = new EmployeeResponse();
-            employeeResponse.setEmployeeId(((Number) firstRow.get("employeeId")).longValue());
-            employeeResponse.setEmployeeLoginId((String) firstRow.get("employeeLoginId"));
-            employeeResponse.setEmployeeName((String) firstRow.get("employeeName"));
-            employeeResponse.setEmployeeNameKana((String) firstRow.get("employeeNameKana"));
-            employeeResponse.setEmployeeBirthDate(simpleDateFormat.format((Date) firstRow.get("employeeBirthDate")));
-            employeeResponse.setEmployeeEmail((String) firstRow.get("employeeEmail"));
-            employeeResponse.setEmployeeTelephone((String) firstRow.get("employeeTelephone"));
-            employeeResponse.setDepartmentId(firstRow.get("departmentId").toString());
-            employeeResponse.setDepartmentName((String) firstRow.get("departmentName"));
-
-            List<CertificationDTO> certs = new ArrayList<>();
-            for (Map<String, Object> row : detailRows) {
-                if (row.get("certificationId") != null) {
-                    CertificationDTO certificationDTO = new CertificationDTO();
-                    certificationDTO.setCertificationId(((Number) row.get("certificationId")).longValue());
-                    certificationDTO.setCertificationName((String) row.get("certificationName"));
-                    certificationDTO.setStartDate(simpleDateFormat.format((Date) row.get("startDate")));
-                    certificationDTO.setEndDate(simpleDateFormat.format((Date) row.get("endDate")));
-                    certificationDTO.setScore((BigDecimal) row.get("score"));
-                    certs.add(certificationDTO);
-                }
-            }
-
-            employeeResponse.setCertifications(certs);
-            employeeResponse.setCode(String.valueOf(HttpStatus.OK.value()));
-
-            return employeeResponse;
-        } catch (ResourceNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (detailRows == null || detailRows.isEmpty()) {
+            throw new BaseException(MessageCode.MSG_CODE_ER013, HttpStatus.NOT_FOUND);
         }
+
+        Map<String, Object> firstRow = detailRows.get(0);
+        EmployeeResponse employeeResponse = new EmployeeResponse();
+        employeeResponse.setEmployeeId(((Number) firstRow.get("employeeId")).longValue());
+        employeeResponse.setEmployeeLoginId((String) firstRow.get("employeeLoginId"));
+        employeeResponse.setEmployeeName((String) firstRow.get("employeeName"));
+        employeeResponse.setEmployeeNameKana((String) firstRow.get("employeeNameKana"));
+        employeeResponse.setEmployeeBirthDate(simpleDateFormat.format((Date) firstRow.get("employeeBirthDate")));
+        employeeResponse.setEmployeeEmail((String) firstRow.get("employeeEmail"));
+        employeeResponse.setEmployeeTelephone((String) firstRow.get("employeeTelephone"));
+        employeeResponse.setDepartmentId(firstRow.get("departmentId").toString());
+        employeeResponse.setDepartmentName((String) firstRow.get("departmentName"));
+
+        List<CertificationDTO> certs = new ArrayList<>();
+        for (Map<String, Object> row : detailRows) {
+            if (row.get("certificationId") != null) {
+                CertificationDTO certificationDTO = new CertificationDTO();
+                certificationDTO.setCertificationId(((Number) row.get("certificationId")).longValue());
+                certificationDTO.setCertificationName((String) row.get("certificationName"));
+                certificationDTO.setStartDate(simpleDateFormat.format((Date) row.get("startDate")));
+                certificationDTO.setEndDate(simpleDateFormat.format((Date) row.get("endDate")));
+                certificationDTO.setScore((BigDecimal) row.get("score"));
+                certs.add(certificationDTO);
+            }
+        }
+
+        employeeResponse.setCertifications(certs);
+        employeeResponse.setCode(String.valueOf(HttpStatus.OK.value()));
+
+        return employeeResponse;
     }
 
     /**
@@ -215,13 +210,13 @@ public class EmployeeServiceImpl implements EmployeeService {
      * Đồng thời xóa tất cả các chứng chỉ liên quan của nhân viên đó.
      * 
      * @param employeeId ID của nhân viên cần xóa
-     * @throws ResourceNotFoundException Nếu không tìm thấy nhân viên cần xóa
+     * @throws BaseException Nếu không tìm thấy nhân viên cần xóa
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteEmployee(Long employeeId) {
         if (!employeeRepository.existsById(employeeId)) {
-            throw new ResourceNotFoundException(MessageCode.MSG_CODE_ER014);
+            throw new BaseException(MessageCode.MSG_CODE_ER014, HttpStatus.NOT_FOUND);
         }
         employeeCertificationRepository.deleteAllByEmployeeId(employeeId);
         employeeRepository.deleteById(employeeId);
@@ -232,16 +227,16 @@ public class EmployeeServiceImpl implements EmployeeService {
      * Quy trình: Cập nhật thông tin cơ bản -> Xóa chứng chỉ cũ -> Thêm chứng chỉ mới.
      * 
      * @param employeeRequest Đối tượng chứa dữ liệu cập nhật
-     * @throws ResourceNotFoundException Nếu không tìm thấy nhân viên cần cập nhật
+     * @throws BaseException Nếu không tìm thấy nhân viên cần cập nhật
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateEmployee(EmployeeRequest employeeRequest) {
-        try {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DATE_FORMAT);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DATE_FORMAT);
 
+        try {
             Employee employee = employeeRepository.findById(employeeRequest.getEmployeeId())
-                    .orElseThrow(() -> new ResourceNotFoundException(MessageCode.MSG_CODE_ER013));
+                    .orElseThrow(() -> new BaseException(MessageCode.MSG_CODE_ER013, HttpStatus.NOT_FOUND));
 
             employee.setEmployeeName(employeeRequest.getEmployeeName());
             employee.setEmployeeNameKana(employeeRequest.getEmployeeNameKana());
@@ -270,9 +265,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
                 employeeCertificationRepository.save(employeeCertification);
             }
-        } catch (ResourceNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
+        } catch (java.text.ParseException e) {
             throw new RuntimeException(e);
         }
     }

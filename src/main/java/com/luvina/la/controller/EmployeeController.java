@@ -4,9 +4,9 @@
  */
 package com.luvina.la.controller;
 
-import com.luvina.la.constant.AppConstants;
-import com.luvina.la.constant.MessageCode;
-import com.luvina.la.exception.ValidationException;
+import com.luvina.la.constants.AppConstants;
+import com.luvina.la.constants.MessageCode;
+import com.luvina.la.exception.BaseException;
 import com.luvina.la.payload.request.EmployeeListRequest;
 import com.luvina.la.payload.request.EmployeeRequest;
 import com.luvina.la.payload.response.EmployeeResponse;
@@ -37,6 +37,11 @@ public class EmployeeController {
     private final EmployeeService employeeService;
     private final EmployeeValidate employeeValidator;
 
+    /**
+     * Tự động trim khoảng trắng dư thừa cho các tham số kiểu String đầu vào.
+     * 
+     * @param binder WebDataBinder dùng để đăng ký CustomEditor
+     */
     @InitBinder
     public void initBinder(WebDataBinder binder) {
         StringTrimmerEditor stringTrimmer = new StringTrimmerEditor(true);
@@ -50,7 +55,13 @@ public class EmployeeController {
      * @return ResponseEntity chứa EmployeeListResponse
      */
     @GetMapping
-    public ResponseEntity<EmployeeListResponse> getEmployees(@Valid EmployeeListRequest request) {
+    public ResponseEntity<EmployeeListResponse> getEmployees(EmployeeListRequest request) {
+        // Validate logic nghiệp vụ cho phân trang và sắp xếp
+        MessageResponse validateRes = employeeValidator.validateEmployeeList(request);
+        if (validateRes != null) {
+            throw new BaseException(validateRes, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         EmployeeListResponse response = new EmployeeListResponse();
         Long total = employeeService.getTotalRecords(request.getEmployeeName(), request.getDepartmentId());
 
@@ -79,7 +90,7 @@ public class EmployeeController {
      * @param employeeRequest Dữ liệu nhân viên cần thêm mới
      * @param mode Chế độ validate (SUBMIT hoặc CONFIRM)
      * @return ResponseEntity chứa EmployeeResponse với mã thành công và thông báo
-     * @throws ValidationException Nếu dữ liệu không vượt qua được bước validate nghiệp vụ
+     * @throws BaseException Nếu dữ liệu không vượt qua được bước validate nghiệp vụ
      */
     @PostMapping
     public ResponseEntity<EmployeeResponse> addEmployee(
@@ -95,7 +106,7 @@ public class EmployeeController {
         }
 
         if (validateRes != null) {
-            throw new ValidationException(validateRes);
+            throw new BaseException(validateRes, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         employeeService.addEmployee(employeeRequest);
@@ -117,7 +128,7 @@ public class EmployeeController {
      * @param employeeRequest Dữ liệu nhân viên cần kiểm tra
      * @param mode Chế độ validate (SUBMIT hoặc CONFIRM)
      * @return ResponseEntity chứa EmployeeResponse với mã thành công 200 nếu dữ liệu hợp lệ
-     * @throws ValidationException Nếu dữ liệu có lỗi nghiệp vụ
+     * @throws BaseException Nếu dữ liệu có lỗi nghiệp vụ
      */
     @PostMapping("/validate")
     public ResponseEntity<EmployeeResponse> validateEmployee(
@@ -133,7 +144,7 @@ public class EmployeeController {
         }
 
         if (validateRes != null) {
-            throw new ValidationException(validateRes);
+            throw new BaseException(validateRes, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         EmployeeResponse employeeResponse = EmployeeResponse.builder()
@@ -180,7 +191,7 @@ public class EmployeeController {
      * 
      * @param employeeRequest Dữ liệu cập nhật nhân viên
      * @return ResponseEntity chứa EmployeeResponse với thông báo cập nhật thành công
-     * @throws ValidationException Nếu dữ liệu cập nhật không hợp lệ
+     * @throws BaseException Nếu dữ liệu cập nhật không hợp lệ
      * @throws ResourceNotFoundException Nếu nhân viên không tồn tại
      */
     @PutMapping
@@ -197,7 +208,7 @@ public class EmployeeController {
         }
 
         if (validateRes != null) {
-            throw new ValidationException(validateRes);
+            throw new BaseException(validateRes, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         employeeService.updateEmployee(employeeRequest);

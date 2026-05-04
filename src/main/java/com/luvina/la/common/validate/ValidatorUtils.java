@@ -4,12 +4,12 @@
  */
 package com.luvina.la.common.validate;
 
-import com.luvina.la.constant.AppConstants;
+import com.luvina.la.constants.AppConstants;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 
-import static com.luvina.la.constant.AppConstants.HALF_WIDTH_KATAKANA_PATTERN;
+import static com.luvina.la.constants.AppConstants.HALF_WIDTH_KATAKANA_PATTERN;
 
 /**
  * Lớp tiện ích cung cấp các hàm validate dữ liệu dùng chung.
@@ -144,5 +144,18 @@ public class ValidatorUtils {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Kiểm tra giá trị sắp xếp có hợp lệ không (ASC hoặc DESC).
+     * 
+     * @param order giá trị sắp xếp
+     * @return true nếu là ASC hoặc DESC, hoặc rỗng (coi như ASC). False nếu sai định dạng.
+     */
+    public static boolean isValidSortOrder(String order) {
+        if (isEmpty(order)) {
+            return true;
+        }
+        return "ASC".equalsIgnoreCase(order) || "DESC".equalsIgnoreCase(order);
     }
 }

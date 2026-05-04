@@ -5,10 +5,11 @@
 package com.luvina.la.validation;
 
 import com.luvina.la.common.validate.ValidatorUtils;
-import com.luvina.la.constant.AppConstants;
-import com.luvina.la.constant.MessageCode;
+import com.luvina.la.constants.AppConstants;
+import com.luvina.la.constants.MessageCode;
 import com.luvina.la.entity.Employee;
 import com.luvina.la.payload.request.CertificationRequest;
+import com.luvina.la.payload.request.EmployeeListRequest;
 import com.luvina.la.payload.request.EmployeeRequest;
 import com.luvina.la.payload.response.MessageResponse;
 import com.luvina.la.repository.CertificationRepository;
@@ -182,7 +183,7 @@ public class EmployeeValidate {
         } else if (ValidatorUtils.isMaxLength(loginId, AppConstants.MAX_LENGTH_50)) {
             return buildError(MessageCode.MSG_CODE_ER006, label, String.valueOf(AppConstants.MAX_LENGTH_50));
         } else if (!ValidatorUtils.isValidLoginId(loginId)) {
-            return MessageResponse.builder().code(MessageCode.MSG_CODE_ER019).build();
+            return buildError(MessageCode.MSG_CODE_ER019, label);
         }
         
         // Check uniqueness
@@ -372,6 +373,33 @@ public class EmployeeValidate {
         return null;
     }
 
- 
+    /**
+     * Validate tham số tìm kiếm và phân trang cho danh sách nhân viên.
+     * 
+     * @param request Tham số từ Client
+     * @return MessageResponse lỗi đầu tiên hoặc null nếu hợp lệ
+     */
+    public MessageResponse validateEmployeeList(EmployeeListRequest request) {
+        // Validate Sort Order (ASC/DESC)
+        if (!ValidatorUtils.isValidSortOrder(request.getOrdEmployeeName())) {
+            return buildError(MessageCode.MSG_CODE_ER021);
+        }
+        if (!ValidatorUtils.isValidSortOrder(request.getOrdCertificationName())) {
+            return buildError(MessageCode.MSG_CODE_ER021);
+        }
+        if (!ValidatorUtils.isValidSortOrder(request.getOrdEndDate())) {
+            return buildError(MessageCode.MSG_CODE_ER021);
+        }
+
+        // Validate Offset/Limit (Positive numbers)
+        if (request.getOffset() != null && request.getOffset() < 0) {
+            return buildError(MessageCode.MSG_CODE_ER018);
+        }
+        if (request.getLimit() != null && request.getLimit() <= 0) {
+            return buildError(MessageCode.MSG_CODE_ER018);
+        }
+
+        return null;
+    }
 }
     

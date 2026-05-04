@@ -4,7 +4,7 @@
  */
 package com.luvina.la.exception;
 
-import com.luvina.la.constant.MessageCode;
+import com.luvina.la.constants.MessageCode;
 import com.luvina.la.payload.response.EmployeeResponse;
 import com.luvina.la.payload.response.MessageResponse;
 import org.springframework.http.HttpStatus;

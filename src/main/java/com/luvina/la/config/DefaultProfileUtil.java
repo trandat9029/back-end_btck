@@ -1,5 +1,6 @@
 package com.luvina.la.config;
 
+import com.luvina.la.constants.AppConstants;
 import org.springframework.boot.SpringApplication;
 
 import java.util.HashMap;
@@ -24,7 +25,7 @@ public class DefaultProfileUtil {
          * This cannot be set in the application.yml file.
          * See https://github.com/spring-projects/spring-boot/issues/1219
          */
-        defProperties.put(SPRING_PROFILE_DEFAULT, Constants.SPRING_PROFILE_DEVELOPMENT);
+        defProperties.put(SPRING_PROFILE_DEFAULT, AppConstants.SPRING_PROFILE_DEVELOPMENT);
         app.setDefaultProperties(defProperties);
     }
 }

@@ -4,7 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.luvina.la.config.Constants;
+import com.luvina.la.constants.AppConstants;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Date;
@@ -22,7 +22,7 @@ public class JwtTokenProvider {
     public String generateToken(AuthUserDetails userDetails) {
 
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + Constants.JWT_EXPIRATION * 1000);
+        Date expiryDate = new Date(now.getTime() + AppConstants.JWT_EXPIRATION * 1000);
 
         return JWT.create()
                 .withIssuer("self")
@@ -30,7 +30,7 @@ public class JwtTokenProvider {
                 .withExpiresAt(expiryDate)
                 .withSubject(userDetails.getEmployee().getEmployeeLoginId())
                 .withClaim("employee", toMap(userDetails.getEmployee()))
-                .sign(Algorithm.HMAC512(Constants.JWT_SECRET));
+                .sign(Algorithm.HMAC512(AppConstants.JWT_SECRET));
     }
 
     /**
@@ -43,7 +43,7 @@ public class JwtTokenProvider {
         Map<String, Object> map = new HashMap<>();
         for (Field field : obj.getClass().getDeclaredFields()) {
             field.setAccessible(true);
-            if (Arrays.stream(Constants.ATTRIBUTIES_TO_TOKEN).anyMatch(field.getName()::equals)) {
+            if (Arrays.stream(AppConstants.ATTRIBUTIES_TO_TOKEN).anyMatch(field.getName()::equals)) {
                 try {
                     map.put(field.getName(), field.get(obj));
                 } catch (Exception e) {
@@ -72,7 +72,7 @@ public class JwtTokenProvider {
      */
     public boolean validateToken(String authToken) {
         try {
-            DecodedJWT token = JWT.require(Algorithm.HMAC512(Constants.JWT_SECRET)).build().verify(authToken);
+            DecodedJWT token = JWT.require(Algorithm.HMAC512(AppConstants.JWT_SECRET)).build().verify(authToken);
 
             // check token Expire
             Date expireAt = token.getExpiresAt();

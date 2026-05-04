@@ -2,7 +2,7 @@
  * Copyright(C) 2026 Luvina
  * [AppConstants.java], 09/04/2026 tranledat
  */
-package com.luvina.la.constant;
+package com.luvina.la.constants;
 
 import java.util.regex.Pattern;
 
@@ -46,4 +46,29 @@ public class AppConstants {
     public static final String MODE = "MODE";
     public static final String MODE_SUBMIT = "SUBMIT";   // Chặng ADM004 -> ADM005
     public static final String MODE_CONFIRM = "CONFIRM"; // Chặng ADM005 -> Lưu DB
+
+    // System & Security Configs
+    public static final String SPRING_PROFILE_DEVELOPMENT = "dev";
+    public static final String SPRING_PROFILE_PRODUCTION = "prod";
+    public static final boolean IS_CROSS_ALLOW = true;
+
+    public static final String JWT_SECRET = "Luvina-Academe";
+    public static final long JWT_EXPIRATION = 160 * 60 * 60; // 7 day
+
+    public static final String[] ENDPOINTS_PUBLIC = new String[] {
+            "/",
+            "/login/**",
+            "/error/**"
+    };
+
+    public static final String[] ENDPOINTS_WITH_ROLE = new String[] {
+            "/user/**"
+    };
+
+    public static final String[] ATTRIBUTIES_TO_TOKEN = new String[] {
+            "employeeId",
+            "employeeName",
+            "employeeLoginId",
+            "employeeEmail"
+    };
 }

@@ -25,10 +25,12 @@ public class EmployeeDTO implements Serializable {
 
     private Long employeeId;
     private String employeeName;
+    private String employeeNameKana;
     private Date employeeBirthDate;
     private String departmentName;
     private String employeeEmail;
     private String employeeTelephone;
+    private String employeeLoginId;
     private String certificationName;
     private Date endDate;
     private BigDecimal score;
