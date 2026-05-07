@@ -16,6 +16,7 @@ public class AppConstants {
     public static final int MIN_LENGTH_8 = 8;
     public static final int MAX_LENGTH_50 = 50;
     public static final int MAX_LENGTH_125 = 125;
+    public static final int MAX_LENGTH_3 = 3;
     public static final String DATE_FORMAT = "yyyy/MM/dd";
 
     public static final Pattern HALF_WIDTH_KATAKANA_PATTERN = Pattern.compile("^[\\uFF66-\\uFF9F]+$");

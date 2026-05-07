@@ -368,6 +368,8 @@ public class EmployeeValidate {
             return buildError(MessageCode.MSG_CODE_ER001, scoreLabel);
         } else if (!ValidatorUtils.isPositiveNumber(certificationRequest.getEmployeeCertificationScore())) {
             return buildError(MessageCode.MSG_CODE_ER018, scoreLabel);
+        } else if (ValidatorUtils.isMaxLength(certificationRequest.getEmployeeCertificationScore(), AppConstants.MAX_LENGTH_3)) {
+            return buildError(MessageCode.MSG_CODE_ER006, scoreLabel, String.valueOf(AppConstants.MAX_LENGTH_3));
         }
 
         return null;
