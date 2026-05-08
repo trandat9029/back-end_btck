@@ -84,16 +84,16 @@ public class EmployeeValidate {
      * @param request Dữ liệu nhân viên
      * @return MessageResponse lỗi đầu tiên, hoặc null nếu hợp lệ
      */
-    public MessageResponse validateForSubmit(EmployeeRequest request) {
-        if (request.getEmployeeId() == null) {
+    public MessageResponse validateForSubmit(EmployeeRequest employeeRequest) {
+        if (employeeRequest.getEmployeeId() == null) {
             // Trường hợp thêm mới (Add) - Theo Hình 1: Check Login ID
-            return validateLoginId(request);
+            return validateLoginId(employeeRequest);
         } else {
             // Trường hợp chỉnh sửa (Edit) - Theo Hình 2: Check ID
             String labelId = getLabel(AppConstants.LABEL_ID);
-            if (request.getEmployeeId() == null) { 
+            if (employeeRequest.getEmployeeId() == null) { 
                 return buildError(MessageCode.MSG_CODE_ER001, labelId);
-            } else if (!employeeRepository.existsById(request.getEmployeeId())) {
+            } else if (!employeeRepository.existsById(employeeRequest.getEmployeeId())) {
                 return buildError(MessageCode.MSG_CODE_ER013, labelId);
             }
         }
@@ -106,8 +106,8 @@ public class EmployeeValidate {
      * @param request Dữ liệu nhân viên
      * @return MessageResponse lỗi đầu tiên, hoặc null nếu hợp lệ
      */
-    public MessageResponse validateForConfirm(EmployeeRequest request) {
-        return validateEmployee(request);
+    public MessageResponse validateForConfirm(EmployeeRequest employeeRequest) {
+        return validateEmployee(employeeRequest);
     }
 
     /**
@@ -116,53 +116,53 @@ public class EmployeeValidate {
      * @param request Dữ liệu từ Client gửi lên.
      * @return MessageResponse chứa lỗi đầu tiên, hoặc null nếu hợp lệ.
      */
-    public MessageResponse validateEmployee(EmployeeRequest request) {
+    public MessageResponse validateEmployee(EmployeeRequest employeeRequest) {
         MessageResponse error;
 
         // 1. Validate ID nhân viên (nếu là mode Edit)
-        if (request.getEmployeeId() != null) {
-            if (!employeeRepository.existsById(request.getEmployeeId())) {
+        if (employeeRequest.getEmployeeId() != null) {
+            if (!employeeRepository.existsById(employeeRequest.getEmployeeId())) {
                 return buildError(MessageCode.MSG_CODE_ER013, getLabel(AppConstants.LABEL_ID));
             }
         }
 
         // 2. Validate Login ID
-        error = validateLoginId(request);
+        error = validateLoginId(employeeRequest);
         if (error != null) return error;
 
         // 3. Validate Department
-        error = validateDepartment(request.getDepartmentId());
+        error = validateDepartment(employeeRequest.getDepartmentId());
         if (error != null) return error;
 
         // 4. Validate Employee Name
-        error = validateEmployeeName(request.getEmployeeName());
+        error = validateEmployeeName(employeeRequest.getEmployeeName());
         if (error != null) return error;
 
         // 5. Validate Employee Name Kana
-        error = validateEmployeeNameKana(request.getEmployeeNameKana());
+        error = validateEmployeeNameKana(employeeRequest.getEmployeeNameKana());
         if (error != null) return error;
 
         // 6. Validate Birth Date
-        error = validateBirthDate(request.getEmployeeBirthDate());
+        error = validateBirthDate(employeeRequest.getEmployeeBirthDate());
         if (error != null) return error;
 
         // 7. Validate Email
-        error = validateEmail(request.getEmployeeEmail());
+        error = validateEmail(employeeRequest.getEmployeeEmail());
         if (error != null) return error;
 
         // 8. Validate Telephone
-        error = validateTelephone(request.getEmployeeTelephone());
+        error = validateTelephone(employeeRequest.getEmployeeTelephone());
         if (error != null) return error;
 
         // 9. Validate Password (chỉ khi thêm mới hoặc có nhập password)
-        if (request.getEmployeeId() == null || !ValidatorUtils.isEmpty(request.getEmployeeLoginPassword())) {
-            error = validatePassword(request.getEmployeeLoginPassword());
+        if (employeeRequest.getEmployeeId() == null || !ValidatorUtils.isEmpty(employeeRequest.getEmployeeLoginPassword())) {
+            error = validatePassword(employeeRequest.getEmployeeLoginPassword());
             if (error != null) return error;
         }
 
         // 10. Validate Certification (nếu có chọn)
-        if (request.getCertificationRequest() != null && !ValidatorUtils.isEmpty(request.getCertificationRequest().getCertificationId())) {
-            error = validateCertification(request.getCertificationRequest());
+        if (employeeRequest.getCertificationRequest() != null && !ValidatorUtils.isEmpty(employeeRequest.getCertificationRequest().getCertificationId())) {
+            error = validateCertification(employeeRequest.getCertificationRequest());
             if (error != null) return error;
         }
 
@@ -175,8 +175,8 @@ public class EmployeeValidate {
      * @param request Chứa Login ID và ID nhân viên
      * @return MessageResponse nếu có lỗi, ngược lại null
      */
-    private MessageResponse validateLoginId(EmployeeRequest request) {
-        String loginId = request.getEmployeeLoginId();
+    private MessageResponse validateLoginId(EmployeeRequest employeeRequest) {
+        String loginId = employeeRequest.getEmployeeLoginId();
         String label = getLabel(AppConstants.LABEL_LOGIN_ID);
         if (ValidatorUtils.isEmpty(loginId)) {
             return buildError(MessageCode.MSG_CODE_ER001, label);
@@ -189,7 +189,7 @@ public class EmployeeValidate {
         // Check uniqueness
         Optional<Employee> existingEmployee = employeeRepository.findByEmployeeLoginId(loginId);
         if (existingEmployee.isPresent()) {
-            if (request.getEmployeeId() == null || !existingEmployee.get().getEmployeeId().equals(request.getEmployeeId())) {
+            if (employeeRequest.getEmployeeId() == null || !existingEmployee.get().getEmployeeId().equals(employeeRequest.getEmployeeId())) {
                 return buildError(MessageCode.MSG_CODE_ER003, label);
             }
         }
@@ -381,23 +381,23 @@ public class EmployeeValidate {
      * @param request Tham số từ Client
      * @return MessageResponse lỗi đầu tiên hoặc null nếu hợp lệ
      */
-    public MessageResponse validateEmployeeList(EmployeeListRequest request) {
+    public MessageResponse validateEmployeeList(EmployeeListRequest employeeListRequest) {
         // Validate Sort Order (ASC/DESC)
-        if (!ValidatorUtils.isValidSortOrder(request.getOrdEmployeeName())) {
+        if (!ValidatorUtils.isValidSortOrder(employeeListRequest.getOrdEmployeeName())) {
             return buildError(MessageCode.MSG_CODE_ER021);
         }
-        if (!ValidatorUtils.isValidSortOrder(request.getOrdCertificationName())) {
+        if (!ValidatorUtils.isValidSortOrder(employeeListRequest.getOrdCertificationName())) {
             return buildError(MessageCode.MSG_CODE_ER021);
         }
-        if (!ValidatorUtils.isValidSortOrder(request.getOrdEndDate())) {
+        if (!ValidatorUtils.isValidSortOrder(employeeListRequest.getOrdEndDate())) {
             return buildError(MessageCode.MSG_CODE_ER021);
         }
 
         // Validate Offset/Limit (Positive numbers)
-        if (request.getOffset() != null && request.getOffset() < 0) {
+        if (employeeListRequest.getOffset() != null && employeeListRequest.getOffset() < 0) {
             return buildError(MessageCode.MSG_CODE_ER018);
         }
-        if (request.getLimit() != null && request.getLimit() <= 0) {
+        if (employeeListRequest.getLimit() != null && employeeListRequest.getLimit() <= 0) {
             return buildError(MessageCode.MSG_CODE_ER018);
         }
 
