@@ -1,6 +1,6 @@
 /**
- * Copyright(C) 2026 Luvina
- * [CertificationServiceImpl.java], 20/04/2026 tranledat
+ * Copyright(C) 2026 Luvina Software
+ * CertificationServiceImpl.java, 20/04/2026 tranledat
  */
 package com.luvina.la.service.impl;
 
@@ -22,8 +22,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CertificationServiceImpl implements CertificationService {
 
+    /** Repository truy cập dữ liệu chứng chỉ */
     private final CertificationRepository certificationRepository;
 
+    /**
+     * Lấy danh sách toàn bộ chứng chỉ trong hệ thống, sắp xếp theo level tăng dần.
+     * 
+     * @return Danh sách CertificationDTO
+     */
     @Override
     public List<CertificationDTO> getCertifications() {
         List<Certification> certifications = certificationRepository.findAllByOrderByCertificationLevelAsc();
@@ -35,6 +41,12 @@ public class CertificationServiceImpl implements CertificationService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Kiểm tra sự tồn tại của chứng chỉ dựa trên ID.
+     * 
+     * @param id ID chứng chỉ cần kiểm tra
+     * @return true nếu tồn tại, ngược lại false
+     */
     @Override
     public boolean checkExistsCertificationById(Long id) {
         return certificationRepository.existsById(id);

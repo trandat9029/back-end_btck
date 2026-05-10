@@ -1,71 +1,97 @@
+/**
+ * Copyright(C) 2026 Luvina Software
+ * EmployeeMapper.java, 09/04/2026 tranledat
+ */
 package com.luvina.la.mapper;
 
 import com.luvina.la.dto.EmployeeDTO;
 import com.luvina.la.entity.Employee;
+import com.luvina.la.payload.response.EmployeeResponse;
+import com.luvina.la.payload.request.EmployeeRequest;
+import com.luvina.la.constants.AppConstants;
 import org.springframework.stereotype.Component;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
+/**
+ * Lớp Mapper chịu trách nhiệm chuyển đổi (mapping) dữ liệu nhân viên.
+ * Giúp tách biệt dữ liệu Database (Entity) và dữ liệu truyền tải (DTO/Request/Response).
+ * 
+ * @author tranledat
+ */
 @Component
 public class EmployeeMapper {
 
-    public Employee toEntity(EmployeeDTO dto) {
-        if (dto == null) return null;
+    /**
+     * Chuyển đổi từ EmployeeRequest (dữ liệu từ Frontend) sang Employee Entity.
+     * Dùng trong luồng Thêm mới hoặc Cập nhật nhân viên.
+     * 
+     * @param request Đối tượng EmployeeRequest từ Client
+     * @return Đối tượng Employee Entity
+     * @throws java.text.ParseException Nếu định dạng ngày tháng không đúng
+     */
+    public Employee mapRequestToEmployeeEntity(EmployeeRequest request) throws java.text.ParseException {
+        if (request == null) return null;
+        SimpleDateFormat sdf = new SimpleDateFormat(AppConstants.DATE_FORMAT);
         Employee entity = new Employee();
-        entity.setEmployeeId(dto.getEmployeeId());
-        entity.setEmployeeName(dto.getEmployeeName());
-        entity.setEmployeeNameKana(dto.getEmployeeNameKana());
-        entity.setEmployeeBirthDate(dto.getEmployeeBirthDate());
-        entity.setEmployeeEmail(dto.getEmployeeEmail());
-        entity.setEmployeeTelephone(dto.getEmployeeTelephone());
+        
+        entity.setEmployeeId(request.getEmployeeId());
+        entity.setEmployeeLoginId(request.getEmployeeLoginId());
+        entity.setEmployeeName(request.getEmployeeName());
+        entity.setEmployeeNameKana(request.getEmployeeNameKana());
+        entity.setEmployeeBirthDate(sdf.parse(request.getEmployeeBirthDate()));
+        entity.setEmployeeEmail(request.getEmployeeEmail());
+        entity.setEmployeeTelephone(request.getEmployeeTelephone());
+        entity.setDepartmentId(Long.parseLong(request.getDepartmentId()));
+        
         return entity;
     }
 
-    public EmployeeDTO toDto(Employee entity) {
+    /**
+     * Chuyển đổi kết quả thô (Object[]) từ Native Query sang đối tượng EmployeeDTO.
+     * Dùng trong luồng Tìm kiếm và hiển thị danh sách nhân viên.
+     * 
+     * @param row Mảng Object chứa dữ liệu một dòng kết quả từ SQL
+     * @return Đối tượng EmployeeDTO
+     */
+    public EmployeeDTO mapRowToEmployeeDTO(Object[] row) {
+        if (row == null) return null;
+        EmployeeDTO dto = new EmployeeDTO();
+        
+        dto.setEmployeeId(((Number) row[0]).longValue());
+        dto.setEmployeeName((String) row[1]);
+        dto.setEmployeeBirthDate((Date) row[2]);
+        dto.setDepartmentName((String) row[3]);
+        dto.setEmployeeEmail((String) row[4]);
+        dto.setEmployeeTelephone((String) row[5]);
+        dto.setCertificationName((String) row[6]);
+        dto.setEndDate((Date) row[7]);
+        dto.setScore((BigDecimal) row[8]);
+        
+        return dto;
+    }
+
+    /**
+     * Chuyển đổi từ Employee Entity sang EmployeeResponse.
+     * Dùng cho API trả về chi tiết thông tin một nhân viên.
+     * 
+     * @param entity Đối tượng Employee Entity
+     * @return Đối tượng EmployeeResponse
+     */
+    public EmployeeResponse mapToEmployeeResponse(Employee entity) {
         if (entity == null) return null;
-        EmployeeDTO dto = new EmployeeDTO();
-        dto.setEmployeeId(entity.getEmployeeId());
-        dto.setEmployeeName(entity.getEmployeeName());
-        dto.setEmployeeNameKana(entity.getEmployeeNameKana());
-        dto.setEmployeeBirthDate(entity.getEmployeeBirthDate());
-        dto.setEmployeeEmail(entity.getEmployeeEmail());
-        dto.setEmployeeTelephone(entity.getEmployeeTelephone());
-        dto.setEmployeeLoginId(entity.getEmployeeLoginId());
-        return dto;
-    }
-    
-    public EmployeeDTO toDtoFromMap(Map<String, Object> map) {
-        if (map == null) return null;
-        EmployeeDTO dto = new EmployeeDTO();
+        SimpleDateFormat sdf = new SimpleDateFormat(AppConstants.DATE_FORMAT);
         
-        dto.setEmployeeId(map.get("employeeId") != null ? ((Number) map.get("employeeId")).longValue() : null);
-        dto.setEmployeeName(map.get("employeeName") != null ? map.get("employeeName").toString() : null);
-        dto.setEmployeeBirthDate((Date) map.get("employeeBirthDate"));
-        dto.setDepartmentName(map.get("departmentName") != null ? map.get("departmentName").toString() : null);
-        dto.setEmployeeEmail(map.get("employeeEmail") != null ? map.get("employeeEmail").toString() : null);
-        dto.setEmployeeTelephone(map.get("employeeTelephone") != null ? map.get("employeeTelephone").toString() : null);
-        dto.setCertificationName(map.get("certificationName") != null ? map.get("certificationName").toString() : null);
-        dto.setEndDate((Date) map.get("endDate"));
-        
-        Object scoreObj = map.get("score");
-        if (scoreObj instanceof BigDecimal) {
-            dto.setScore((BigDecimal) scoreObj);
-        } else if (scoreObj instanceof Number) {
-            dto.setScore(BigDecimal.valueOf(((Number) scoreObj).doubleValue()));
-        }
-
-        return dto;
-    }
-
-    public List<EmployeeDTO> toList(Iterable<Employee> list) {
-        if (list == null) return null;
-        List<EmployeeDTO> dtoList = new ArrayList<>();
-        for (Employee employee : list) {
-            dtoList.add(toDto(employee));
-        }
-        return dtoList;
+        return EmployeeResponse.builder()
+                .employeeId(entity.getEmployeeId())
+                .employeeLoginId(entity.getEmployeeLoginId())
+                .employeeName(entity.getEmployeeName())
+                .employeeNameKana(entity.getEmployeeNameKana())
+                .employeeBirthDate(sdf.format(entity.getEmployeeBirthDate()))
+                .employeeEmail(entity.getEmployeeEmail())
+                .employeeTelephone(entity.getEmployeeTelephone())
+                .departmentId(String.valueOf(entity.getDepartmentId()))
+                .build();
     }
 }

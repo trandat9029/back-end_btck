@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
         EmployeeResponse response = EmployeeResponse.builder()
                 .code(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()))
                 .message(MessageResponse.builder()
-                        .code(MessageCode.MSG_CODE_ER015)
+                        .code(MessageCode.CODE_ER015)
                         .params(new ArrayList<>())
                         .build())
                 .build();

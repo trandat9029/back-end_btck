@@ -1,6 +1,6 @@
 /**
- * Copyright(C) 2026 Luvina
- * [EmployeeListResponse.java], 23/04/2026 tranledat
+ * Copyright(C) 2026 Luvina Software
+ * EmployeeListResponse.java, 23/04/2026 tranledat
  */
 package com.luvina.la.payload.response;
 

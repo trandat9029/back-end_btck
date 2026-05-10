@@ -1,6 +1,6 @@
 /**
- * Copyright(C) 2026 Luvina
- * [DepartmentController.java], 09/04/2026 tranledat
+ * Copyright(C) 2026 Luvina Software
+ * DepartmentController.java, 09/04/2026 tranledat
  */
 package com.luvina.la.controller;
 
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controller xử lý các yêu cầu liên quan đến phòng ban.
+ * Cung cấp API để lấy danh sách phòng ban cho các màn hình tìm kiếm và đăng ký.
  * 
  * @author tranledat
  */
@@ -28,7 +29,7 @@ public class DepartmentController {
     /**
      * API Lấy danh sách tất cả các phòng ban có trong hệ thống.
      * 
-     * @return ResponseEntity chứa DepartmentListResponse với danh sách phòng ban
+     * @return ResponseEntity chứa DepartmentListResponse với danh sách phòng ban và mã trạng thái
      */
     @GetMapping
     public ResponseEntity<DepartmentListResponse> getDepartments() {

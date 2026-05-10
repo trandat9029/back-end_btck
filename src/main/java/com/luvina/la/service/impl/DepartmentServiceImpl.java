@@ -1,6 +1,6 @@
 /**
- * Copyright(C) 2026 Luvina
- * [DepartmentServiceImpl.java], 09/04/2026 tranledat
+ * Copyright(C) 2026 Luvina Software
+ * DepartmentServiceImpl.java, 09/04/2026 tranledat
  */
 package com.luvina.la.service.impl;
 
@@ -24,6 +24,11 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentRepository departmentRepository;
 
+    /**
+     * Lấy danh sách tất cả các phòng ban, sắp xếp theo ID tăng dần.
+     * 
+     * @return Danh sách DepartmentDTO
+     */
     @Override
     public List<DepartmentDTO> getDepartments() {
         List<Department> departments = departmentRepository.findAllByOrderByDepartmentIdAsc();
@@ -35,6 +40,12 @@ public class DepartmentServiceImpl implements DepartmentService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Kiểm tra sự tồn tại của phòng ban theo ID.
+     * 
+     * @param id ID phòng ban cần kiểm tra
+     * @return true nếu tồn tại, ngược lại false
+     */
     @Override
     public boolean checkExistsDepartmentById(Long id) {
         return departmentRepository.existsById(id);

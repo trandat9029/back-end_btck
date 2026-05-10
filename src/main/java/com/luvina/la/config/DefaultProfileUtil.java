@@ -6,6 +6,11 @@ import org.springframework.boot.SpringApplication;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Tiện ích để cấu hình profile mặc định cho Spring Boot.
+ * 
+ * @author tranledat
+ */
 public class DefaultProfileUtil {
 
     private static final String SPRING_PROFILE_DEFAULT = "spring.profiles.default";

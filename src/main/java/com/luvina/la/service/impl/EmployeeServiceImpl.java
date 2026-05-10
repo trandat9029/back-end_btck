@@ -1,6 +1,6 @@
 /**
- * Copyright(C) 2026 Luvina
- * [EmployeeServiceImpl.java], 13/04/2026 tranledat
+ * Copyright(C) 2026 Luvina Software
+ * EmployeeServiceImpl.java, 09/04/2026 tranledat
  */
 package com.luvina.la.service.impl;
 
@@ -28,15 +28,9 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Lớp triển khai các nghiệp vụ liên quan đến nhân viên.
+ * Sử dụng Native SQL để tối ưu hiệu năng truy vấn và xử lý logic nghiệp vụ phức tạp.
  * 
  * @author tranledat
  */
@@ -58,68 +53,101 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final PasswordEncoder passwordEncoder;
     private final EmployeeMapper employeeMapper;
 
-
     /**
      * Lấy tổng số bản ghi nhân viên dựa trên điều kiện tìm kiếm.
      * 
-     * @param employeeName Tên nhân viên (hỗ trợ tìm kiếm partial)
-     * @param departmentId ID phòng ban
-     * @return Tổng số lượng nhân viên thỏa mãn điều kiện
+     * @param employeeName Tên nhân viên (hỗ trợ tìm kiếm partial/LIKE)
+     * @param departmentId ID phòng ban cần lọc
+     * @return Tổng số lượng nhân viên thỏa mãn điều kiện (Long)
      */
     @Override
     public Long getTotalRecords(String employeeName, Long departmentId) {
         String escapedName = CommonUtils.escapeLike(employeeName);
-        Pageable pageable = PageRequest.of(0, 1);
-        Page<Map<String, Object>> page = employeeRepository.searchEmployees(escapedName, departmentId, pageable);
-        return page.getTotalElements();
+        return employeeRepository.countEmployees(escapedName, departmentId);
     }
 
     /**
-     * Lấy danh sách nhân viên có phân trang, tìm kiếm và sắp xếp.
+     * Lấy danh sách nhân viên có phân trang, tìm kiếm và sắp xếp bằng Native SQL.
      * 
      * @param employeeName Tên nhân viên cần tìm
      * @param departmentId ID phòng ban
      * @param ordEmployeeName Hướng sắp xếp theo tên nhân viên (ASC/DESC)
      * @param ordCertificationName Hướng sắp xếp theo tên chứng chỉ
      * @param ordEndDate Hướng sắp xếp theo ngày kết thúc chứng chỉ
-     * @param offset Vị trí bắt đầu lấy dữ liệu
+     * @param offset Vị trí bắt đầu lấy dữ liệu (phân trang)
      * @param limit Số lượng bản ghi tối đa trên một trang
-     * @return Danh sách EmployeeDTO chứa thông tin nhân viên
+     * @return Danh sách EmployeeDTO chứa thông tin nhân viên và chứng chỉ cao nhất (nếu có)
      */
     @Override
     public List<EmployeeDTO> getEmployees(String employeeName, Long departmentId, String ordEmployeeName,
             String ordCertificationName, String ordEndDate, Integer offset, Integer limit) {
 
+        String escapedName = CommonUtils.escapeLike(employeeName);
         int pageSize = (limit != null && limit > 0) ? limit : AppConstants.DEFAULT_PAGE_SIZE;
         int pageOffset = (offset != null) ? offset : 0;
-        int pageNumber = pageOffset / pageSize;
 
-        String escapedName = CommonUtils.escapeLike(employeeName);
+        List<Object[]> results = employeeRepository.getEmployees(
+                escapedName,
+                departmentId,
+                ordEmployeeName,
+                ordCertificationName,
+                ordEndDate,
+                pageOffset,
+                pageSize
+        );
 
-        Sort.Direction dirName = CommonUtils.getDirection(ordEmployeeName);
-        Sort.Direction dirCert = CommonUtils.getDirection(ordCertificationName);
-        Sort.Direction dirEnd = CommonUtils.getDirection(ordEndDate);
-
-        if (ordCertificationName != null && !ordCertificationName.isEmpty()) {
-            dirCert = ordCertificationName.equalsIgnoreCase("ASC") ? Sort.Direction.DESC : Sort.Direction.ASC;
-        }
-
-        Sort sort = JpaSort.unsafe(dirName, "employee_name")
-                .and(JpaSort.unsafe(dirCert, "COALESCE(c.certification_level, 6)"))
-                .and(JpaSort.unsafe(dirEnd, "ec.end_date"));
-
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
-
-        return employeeRepository.searchEmployees(escapedName, departmentId, pageable).getContent()
-                .stream()
-                .map(employeeMapper::toDtoFromMap)
+        return results.stream()
+                .map(this::mapToEmployeeDTO)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Thêm mới một nhân viên vào hệ thống.
+     * Chuyển đổi kết quả thô (Object[]) từ Native Query sang đối tượng EmployeeDTO.
+     * Thứ tự các phần tử trong mảng row PHẢI khớp chính xác với thứ tự các cột 
+     * được SELECT trong câu truy vấn tại {@link com.luvina.la.repository.EmployeeRepository#getEmployees}.
      * 
-     * @param employeeRequest Dữ liệu nhân viên cần thêm
+     * @param row Mảng Object chứa dữ liệu một dòng kết quả từ SQL
+     * @return Đối tượng EmployeeDTO đã được điền đầy đủ thông tin
+     */
+    private EmployeeDTO mapToEmployeeDTO(Object[] row) {
+        EmployeeDTO dto = new EmployeeDTO();
+        
+        // e.employee_id (Cột 0)
+        dto.setEmployeeId(((Number) row[0]).longValue());
+        
+        // e.employee_name (Cột 1)
+        dto.setEmployeeName((String) row[1]);
+        
+        // e.employee_birth_date (Cột 2)
+        dto.setEmployeeBirthDate((Date) row[2]);
+        
+        // d.department_name (Cột 3)
+        dto.setDepartmentName((String) row[3]);
+        
+        // e.employee_email (Cột 4)
+        dto.setEmployeeEmail((String) row[4]);
+        
+        // e.employee_telephone (Cột 5)
+        dto.setEmployeeTelephone((String) row[5]);
+        
+        // c.certification_name (Cột 6)
+        dto.setCertificationName((String) row[6]);
+        
+        // ec.end_date (Cột 7)
+        dto.setEndDate((Date) row[7]);
+        
+        // ec.score (Cột 8)
+        dto.setScore((BigDecimal) row[8]);
+        
+        return dto;
+    }
+
+
+    /**
+     * Thêm mới một nhân viên vào hệ thống và lưu chứng chỉ đi kèm nếu có.
+     * 
+     * @param employeeRequest Dữ liệu nhân viên từ Client
+     * @throws RuntimeException Nếu có lỗi xảy ra trong quá trình parse ngày tháng
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -156,78 +184,72 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-
     /**
-     * Lấy chi tiết thông tin một nhân viên theo ID.
+     * Lấy chi tiết thông tin một nhân viên theo ID bao gồm cả danh sách chứng chỉ.
      * 
-     * @param employeeId ID nhân viên
-     * @return EmployeeResponse chứa thông tin chi tiết
-     * @throws BaseException Nếu không tìm thấy nhân viên
+     * @param employeeId ID nhân viên cần lấy thông tin
+     * @return EmployeeResponse chứa thông tin chi tiết cá nhân và chứng chỉ
+     * @throws BaseException Nếu không tìm thấy nhân viên trong hệ thống (ER013)
      */
     @Override
     public EmployeeResponse getEmployeeDetailById(Long employeeId) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DATE_FORMAT);
 
-        List<Map<String, Object>> detailRows = employeeRepository.findDetailById(employeeId);
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new BaseException(MessageCode.CODE_ER013, HttpStatus.NOT_FOUND));
 
-        if (detailRows == null || detailRows.isEmpty()) {
-            throw new BaseException(MessageCode.MSG_CODE_ER013, HttpStatus.NOT_FOUND);
-        }
+        EmployeeResponse response = new EmployeeResponse();
+        response.setEmployeeId(employee.getEmployeeId());
+        response.setEmployeeLoginId(employee.getEmployeeLoginId());
+        response.setEmployeeName(employee.getEmployeeName());
+        response.setEmployeeNameKana(employee.getEmployeeNameKana());
+        response.setEmployeeBirthDate(simpleDateFormat.format(employee.getEmployeeBirthDate()));
+        response.setEmployeeEmail(employee.getEmployeeEmail());
+        response.setEmployeeTelephone(employee.getEmployeeTelephone());
+        response.setDepartmentId(String.valueOf(employee.getDepartmentId()));
+        
+        departmentRepository.findById(employee.getDepartmentId())
+                .ifPresent(d -> response.setDepartmentName(d.getDepartmentName()));
 
-        Map<String, Object> firstRow = detailRows.get(0);
-        EmployeeResponse employeeResponse = new EmployeeResponse();
-        employeeResponse.setEmployeeId(((Number) firstRow.get("employeeId")).longValue());
-        employeeResponse.setEmployeeLoginId((String) firstRow.get("employeeLoginId"));
-        employeeResponse.setEmployeeName((String) firstRow.get("employeeName"));
-        employeeResponse.setEmployeeNameKana((String) firstRow.get("employeeNameKana"));
-        employeeResponse.setEmployeeBirthDate(simpleDateFormat.format((Date) firstRow.get("employeeBirthDate")));
-        employeeResponse.setEmployeeEmail((String) firstRow.get("employeeEmail"));
-        employeeResponse.setEmployeeTelephone((String) firstRow.get("employeeTelephone"));
-        employeeResponse.setDepartmentId(firstRow.get("departmentId").toString());
-        employeeResponse.setDepartmentName((String) firstRow.get("departmentName"));
+        List<EmployeeCertification> certs = employeeCertificationRepository.findAllByEmployeeId(employeeId);
+        List<CertificationDTO> certDtos = certs.stream().map(ec -> {
+            CertificationDTO dto = new CertificationDTO();
+            dto.setCertificationId(ec.getCertificationId());
+            certificationRepository.findById(ec.getCertificationId())
+                    .ifPresent(c -> dto.setCertificationName(c.getCertificationName()));
+            dto.setStartDate(simpleDateFormat.format(ec.getStartDate()));
+            dto.setEndDate(simpleDateFormat.format(ec.getEndDate()));
+            dto.setScore(ec.getScore());
+            return dto;
+        }).collect(Collectors.toList());
 
-        List<CertificationDTO> certs = new ArrayList<>();
-        for (Map<String, Object> row : detailRows) {
-            if (row.get("certificationId") != null) {
-                CertificationDTO certificationDTO = new CertificationDTO();
-                certificationDTO.setCertificationId(((Number) row.get("certificationId")).longValue());
-                certificationDTO.setCertificationName((String) row.get("certificationName"));
-                certificationDTO.setStartDate(simpleDateFormat.format((Date) row.get("startDate")));
-                certificationDTO.setEndDate(simpleDateFormat.format((Date) row.get("endDate")));
-                certificationDTO.setScore((BigDecimal) row.get("score"));
-                certs.add(certificationDTO);
-            }
-        }
-
-        employeeResponse.setCertifications(certs);
-        employeeResponse.setCode(String.valueOf(HttpStatus.OK.value()));
-
-        return employeeResponse;
+        response.setCertifications(certDtos);
+        response.setCode(String.valueOf(HttpStatus.OK.value()));
+        return response;
     }
 
     /**
-     * Xóa nhân viên khỏi hệ thống.
-     * Đồng thời xóa tất cả các chứng chỉ liên quan của nhân viên đó.
+     * Xóa nhân viên khỏi hệ thống và xóa các chứng chỉ liên quan.
      * 
      * @param employeeId ID của nhân viên cần xóa
-     * @throws BaseException Nếu không tìm thấy nhân viên cần xóa
+     * @throws BaseException Nếu không tìm thấy nhân viên để xóa (ER014)
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteEmployee(Long employeeId) {
         if (!employeeRepository.existsById(employeeId)) {
-            throw new BaseException(MessageCode.MSG_CODE_ER014, HttpStatus.NOT_FOUND);
+            throw new BaseException(MessageCode.CODE_ER014, HttpStatus.NOT_FOUND);
         }
         employeeCertificationRepository.deleteAllByEmployeeId(employeeId);
         employeeRepository.deleteById(employeeId);
     }
 
     /**
-     * Cập nhật thông tin của nhân viên hiện có.
-     * Quy trình: Cập nhật thông tin cơ bản -> Xóa chứng chỉ cũ -> Thêm chứng chỉ mới.
+     * Cập nhật thông tin của nhân viên hiện có và quản lý lại danh sách chứng chỉ.
      * 
-     * @param employeeRequest Đối tượng chứa dữ liệu cập nhật
-     * @throws BaseException Nếu không tìm thấy nhân viên cần cập nhật
+     * @param employeeRequest Đối tượng chứa dữ liệu cập nhật từ Client
+     * @throws BaseException Nếu không tìm thấy nhân viên (ER013)
+     * @throws RuntimeException Nếu có lỗi định dạng ngày tháng
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -236,7 +258,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         try {
             Employee employee = employeeRepository.findById(employeeRequest.getEmployeeId())
-                    .orElseThrow(() -> new BaseException(MessageCode.MSG_CODE_ER013, HttpStatus.NOT_FOUND));
+                    .orElseThrow(() -> new BaseException(MessageCode.CODE_ER013, HttpStatus.NOT_FOUND));
 
             employee.setEmployeeName(employeeRequest.getEmployeeName());
             employee.setEmployeeNameKana(employeeRequest.getEmployeeNameKana());
@@ -282,11 +304,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     /**
-     * Kiểm tra sự tồn tại của Login ID để tránh trùng lặp.
+     * Kiểm tra sự tồn tại của Login ID để tránh trùng lặp khi thêm mới hoặc cập nhật.
      * 
      * @param loginId Login ID cần kiểm tra
-     * @param employeeId ID của nhân viên hiện tại (để loại trừ khi update)
-     * @return true nếu Login ID đã bị chiếm dụng, ngược lại false
+     * @param employeeId ID của nhân viên hiện tại (null nếu thêm mới)
+     * @return true nếu Login ID đã tồn tại cho nhân viên khác, ngược lại false
      */
     @Override
     public boolean checkExistsEmployeeByLoginId(String loginId, Long employeeId) {

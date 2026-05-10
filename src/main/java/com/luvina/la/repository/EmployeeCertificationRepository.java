@@ -1,6 +1,6 @@
 /**
- * Copyright(C) 2026 Luvina
- * [EmployeeCertificationRepository.java], 13/04/2026 tranledat
+ * Copyright(C) 2026 Luvina Software
+ * EmployeeCertificationRepository.java, 13/04/2026 tranledat
  */
 package com.luvina.la.repository;
 

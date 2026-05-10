@@ -1,6 +1,6 @@
 /**
- * Copyright(C) 2026 Luvina
- * [EmployeeListRequest.java], 14/04/2026 tranledat
+ * Copyright(C) 2026 Luvina Software
+ * EmployeeListRequest.java, 14/04/2026 tranledat
  */
 package com.luvina.la.payload.request;
 
@@ -14,16 +14,24 @@ import lombok.Data;
 @Data
 public class EmployeeListRequest {
 
-    private String employeeName;
-    private Long departmentId;
+    /** Tên nhân viên dùng để tìm kiếm */
+    private String employeeNameSearch;
 
-    private String ordEmployeeName;
+    /** ID phòng ban dùng để lọc */
+    private Long departmentIdFilter;
 
-    private String ordCertificationName;
+    /** Trạng thái sắp xếp theo tên nhân viên (ASC/DESC) */
+    private String employeeNameSort;
 
-    private String ordEndDate;
+    /** Trạng thái sắp xếp theo tên chứng chỉ (ASC/DESC) */
+    private String certificationNameSort;
 
+    /** Trạng thái sắp xếp theo ngày hết hạn chứng chỉ (ASC/DESC) */
+    private String endDateSort;
+
+    /** Vị trí bắt đầu lấy dữ liệu (phân trang) */
     private Integer offset;
 
+    /** Số lượng bản ghi tối đa trên một trang */
     private Integer limit;
 }
