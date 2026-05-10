@@ -164,7 +164,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.setEmployeeTelephone(employeeRequest.getEmployeeTelephone());
             employee.setDepartmentId(Long.parseLong(employeeRequest.getDepartmentId()));
             employee.setEmployeeLoginPassword(passwordEncoder.encode(employeeRequest.getEmployeeLoginPassword()));
-            employee.setRole(1);
+            // Gán quyền mặc định là User khi tạo mới
+            employee.setRole(AppConstants.ROLE_USER);
 
             employee = employeeRepository.save(employee);
 
@@ -237,9 +238,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteEmployee(Long employeeId) {
-        if (!employeeRepository.existsById(employeeId)) {
-            throw new BaseException(MessageCode.CODE_ER014, HttpStatus.NOT_FOUND);
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new BaseException(MessageCode.CODE_ER014, HttpStatus.NOT_FOUND));
+
+        // Không cho phép xóa tài khoản quản trị viên
+        if (AppConstants.ROLE_ADMIN == employee.getRole()) {
+            throw new BaseException(MessageCode.CODE_ER023, HttpStatus.FORBIDDEN);
         }
+
         employeeCertificationRepository.deleteAllByEmployeeId(employeeId);
         employeeRepository.deleteById(employeeId);
     }

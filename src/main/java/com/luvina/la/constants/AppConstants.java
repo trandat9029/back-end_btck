@@ -76,6 +76,13 @@ public final class AppConstants {
     public static final String ACTION_EDIT = "edit";
     public static final String ACTION = "action";
 
+    // --- Quyền vai trò (Role) ---
+    /** Quyền người dùng thông thường (employee_role = 1) */
+    public static final int ROLE_USER = 1;
+
+    /** Quyền quản trị viên (employee_role = 0) */
+    public static final int ROLE_ADMIN = 0;
+
     // --- Key nhãn (Labels) cho thông báo lỗi ---
     public static final String LABEL_ID = "label.id";
     public static final String LABEL_LOGIN_ID = "label.employee_login_id";
@@ -90,4 +97,17 @@ public final class AppConstants {
     public static final String LABEL_CERT_START_DATE = "label.certification_start_date";
     public static final String LABEL_CERT_END_DATE = "label.certification_end_date";
     public static final String LABEL_CERT_SCORE = "label.certification_score";
+
+    // --- Regex & Patterns ---
+    /** Regex validate Login ID: Bắt đầu bằng chữ hoặc gạch dưới, theo sau là chữ, số hoặc gạch dưới */
+    public static final String REGEX_LOGIN_ID = "^[a-zA-Z_][a-zA-Z0-9_]*$";
+
+    /** Pattern validate Katakana Half-width (Unicode range: FF66-FF9F) */
+    public static final java.util.regex.Pattern HALF_WIDTH_KATAKANA_PATTERN = java.util.regex.Pattern.compile("^[\\uFF66-\\uFF9F]*$");
+
+    // --- Email Tokens ---
+    public static final String EMAIL_AT = "@";
+    public static final String EMAIL_DOT = ".";
+    public static final String EMAIL_AT_DOT = "@.";
+    public static final String EMAIL_DOT_AT = ".@";
 }

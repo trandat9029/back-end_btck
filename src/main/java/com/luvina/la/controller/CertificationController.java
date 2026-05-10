@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CertificationController {
 
+    /** Service xử lý nghiệp vụ liên quan đến chứng chỉ Nhật ngữ */
     private final CertificationService certificationService;
 
     /**

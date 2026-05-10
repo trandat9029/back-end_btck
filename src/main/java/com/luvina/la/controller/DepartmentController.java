@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class DepartmentController {
 
+    /** Service xử lý nghiệp vụ liên quan đến phòng ban */
     private final DepartmentService departmentService;
 
     /**

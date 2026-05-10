@@ -34,10 +34,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 public class AuthController {
+    /** Logger ghi lại cảnh báo khi đăng nhập thất bại */
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
+    /** Provider tạo và xác thực JWT Token */
     private final JwtTokenProvider tokenProvider;
+
+    /** Manager xử lý quá trình xác thực username/password */
     private final AuthenticationManager authenticationManager;
+
+    /** Service tải thông tin người dùng từ Database theo username */
     private final UserDetailsServiceImpl userDetailsService;
 
     /**

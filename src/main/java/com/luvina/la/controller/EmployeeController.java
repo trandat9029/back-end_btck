@@ -34,7 +34,10 @@ import java.util.ArrayList;
 @RequiredArgsConstructor
 public class EmployeeController {
 
+    /** Service xử lý toàn bộ nghiệp vụ liên quan đến nhân viên */
     private final EmployeeService employeeService;
+
+    /** Component thực hiện validate dữ liệu nhân viên theo nghiệp vụ */
     private final EmployeeValidate employeeValidator;
 
     /**
@@ -98,8 +101,8 @@ public class EmployeeController {
             @RequestBody EmployeeRequest employeeRequest,
             @RequestParam(value = AppConstants.ACTION, defaultValue = AppConstants.ACTION_ADD) String action) {
         
-        // Thực hiện validate chặng SUBMIT dựa trên hành động cụ thể
-        MessageResponse validateRes = employeeValidator.validateForSubmit(employeeRequest, action);
+        // Kiểm tra tồn tại các đối tượng định danh trước khi chuyển sang màn hình xác nhận
+        MessageResponse validateRes = employeeValidator.validateExistence(employeeRequest, action);
 
         if (validateRes != null) {
             throw new BaseException(validateRes, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -124,7 +127,7 @@ public class EmployeeController {
     @PostMapping
     public ResponseEntity<EmployeeResponse> addEmployee(@RequestBody EmployeeRequest employeeRequest) {
         // Luôn luôn validate toàn bộ dữ liệu trước khi thực hiện thêm mới vào Database
-        MessageResponse validateRes = employeeValidator.validateForConfirm(employeeRequest);
+        MessageResponse validateRes = employeeValidator.validateEmployee(employeeRequest);
 
         if (validateRes != null) {
             throw new BaseException(validateRes, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -188,7 +191,7 @@ public class EmployeeController {
     public ResponseEntity<EmployeeResponse> updateEmployee(@RequestBody EmployeeRequest employeeRequest) {
 
         // Luôn luôn validate toàn bộ dữ liệu trước khi thực hiện cập nhật vào Database
-        MessageResponse validateRes = employeeValidator.validateForConfirm(employeeRequest);
+        MessageResponse validateRes = employeeValidator.validateEmployee(employeeRequest);
 
         if (validateRes != null) {
             throw new BaseException(validateRes, HttpStatus.INTERNAL_SERVER_ERROR);

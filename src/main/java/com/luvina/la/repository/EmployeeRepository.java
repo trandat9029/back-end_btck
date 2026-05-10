@@ -20,19 +20,32 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
+    /**
+     * Tìm kiếm nhân viên theo Login ID (tên đăng nhập).
+     * Được sử dụng trong luồng xác thực (Authentication) và kiểm tra trùng lặp.
+     *
+     * @param employeeLoginId Tên đăng nhập cần tìm
+     * @return Optional chứa nhân viên nếu tìm thấy, Optional.empty() nếu không tồn tại
+     */
     Optional<Employee> findByEmployeeLoginId(String employeeLoginId);
 
     /**
-     * Kiểm tra login_id đã tồn tại chưa (dùng khi add).
+     * Kiểm tra login_id đã tồn tại trong hệ thống chưa (dùng khi thêm mới).
+     *
+     * @param employeeLoginId Tên đăng nhập cần kiểm tra
+     * @return true nếu Login ID đã tồn tại, false nếu chưa có
      */
     boolean existsByEmployeeLoginId(String employeeLoginId);
 
     /**
      * Đếm tổng số nhân viên (loại trừ admin) theo điều kiện tìm kiếm.
-     *
-     * mệnh đề LIKE có "ESCAPE '!'" để các ký tự '%', '_', '\' đã được
-     * escape ở tầng Service (ValidateUtil#escapeLikePattern) được hiểu là ký tự
+     * Mệnh đề LIKE có "ESCAPE '!'" để các ký tự '%', '_', '\' đã được
+     * escape ở tầng Service (CommonUtils#escapeLike) được hiểu là ký tự
      * thường, không phải wildcard.
+     *
+     * @param employeeName Tên nhân viên cần lọc (null = tất cả, đã được escape ký tự đặc biệt)
+     * @param departmentId ID phòng ban cần lọc (null = tất cả phòng ban)
+     * @return Tổng số bản ghi nhân viên thỏa mãn điều kiện
      */
     @Query(value =
         "SELECT COUNT(e.employee_id) " +
@@ -49,10 +62,18 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     /**
      * Lấy danh sách nhân viên (loại trừ admin) với tìm kiếm, sắp xếp, phân trang.
      * Thứ tự sắp xếp cố định: employee_name → certification_name → end_date → employee_id.
-     *
-     * mệnh đề LIKE có "ESCAPE '!'" tương tự countEmployees để đảm bảo
+     * Mệnh đề LIKE có "ESCAPE '!'" tương tự countEmployees để đảm bảo
      * ký tự đặc biệt ('%', '_', '\') không còn hiệu ứng wildcard sau khi được
      * escape ở tầng Service.
+     *
+     * @param employeeName        Tên nhân viên cần tìm kiếm (null = tất cả, đã escape ký tự đặc biệt)
+     * @param departmentId        ID phòng ban cần lọc (null = tất cả phòng ban)
+     * @param ordEmployeeName     Hướng sắp xếp theo tên nhân viên: "ASC" hoặc "DESC"
+     * @param ordCertificationName Hướng sắp xếp theo cấp độ chứng chỉ: "ASC" hoặc "DESC"
+     * @param ordEndDate          Hướng sắp xếp theo ngày hết hạn chứng chỉ: "ASC" hoặc "DESC"
+     * @param offset              Vị trí bắt đầu lấy dữ liệu (dùng cho phân trang)
+     * @param limit               Số lượng bản ghi tối đa trả về
+     * @return Danh sách mảng Object[], mỗi phần tử là một dòng dữ liệu từ SQL
      */
     @Query(value =
         "SELECT " +
